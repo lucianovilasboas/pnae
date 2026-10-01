@@ -1,0 +1,74 @@
+# =====================================================================
+# IFMG Alimenta (PNAE) — DESENVOLVIMENTO LOCAL
+# ---------------------------------------------------------------------
+# Publica as portas no host e usa o servidor de desenvolvimento do Django
+# com recarga automática.
+#
+#   cp .env.example .env      # e preencha
+#   docker compose -f docker-compose.dev.yml up -d --build
+#
+# Acesse: http://127.0.0.1:8601/
+# Admin:   http://127.0.0.1:8601/admin/
+#
+# Obs.: o nome do contêiner é pnae_app_django (não app_django) porque
+# app_django já é usado pelo projeto ifeventos_app nesta máquina.
+# =====================================================================
+
+services:
+
+  app:
+    container_name: pnae_app_django
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pnae_app:latest
+    restart: unless-stopped
+    command: ./entrypoint.sh
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      APP_SERVER: runserver
+      APP_PORT: "8601"
+    volumes:
+      - .:/pnae_app
+    ports:
+      - "8601:8601"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+
+  db:
+    container_name: pnae_db
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-django_db}
+      POSTGRES_USER: ${POSTGRES_USER:-django_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-django_password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # 5433 no host para não conflitar com outros Postgres locais.
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-django_user} -d ${POSTGRES_DB:-django_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - default
+
+networks:
+  default:
+    # Sub-rede fixa: o pool padrão do Docker nesta máquina está esgotado
+    # ("all predefined address pools have been fully subnetted").
+    ipam:
+      config:
+        - subnet: 10.200.0.0/24
+
+volumes:
+  pgdata:

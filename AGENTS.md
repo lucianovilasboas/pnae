@@ -46,7 +46,13 @@ Um commit = uma mudança coerente. Não misturar assuntos.
 > A definir na Fase 2, quando o scaffold Django existir. Alvo previsto:
 
 ```bash
-docker exec app_django bash -lc 'cd /pnae_app && python manage.py test -v 1'
+docker exec pnae_app_django bash -lc 'cd /pnae_app && python manage.py test -v 1'
+```
+
+Alternativa com pytest (recomendada no dia a dia):
+
+```bash
+docker exec pnae_app_django bash -lc 'cd /pnae_app && python -m pytest'
 ```
 
 Antes de declarar uma tarefa concluída, rodar os testes afetados. Quando não

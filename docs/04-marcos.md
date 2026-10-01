@@ -32,22 +32,28 @@ Sem código. Destrava o backend.
 
 ## Marco 1 — Fundamentos (3–5 dias)
 
-- [ ] **M1.1** Scaffold Django + Docker Compose dev/prod + `.env.example`.
+- [x] **M1.1** Scaffold Django + Docker Compose dev/prod + `.env.example`.
   `V:` `docker compose up` sobe app e Postgres.
-- [ ] **M1.2** App `campus`: `Campus`, `ClassGroup` + migrations + admin.
+- [x] **M1.2** App `campus`: `Campus`, `ClassGroup` + migrations + admin.
   `V:` criar campus/turma no admin.
-- [ ] **M1.3** App `accounts`: `User` custom, papéis e permissões extras;
+- [x] **M1.3** App `accounts`: `User` custom, papéis e permissões extras;
   login/logout. `V:` login por e-mail e bloqueio por papel.
-- [ ] **M1.4** App `students`: `Student` + constraints (`unique` por campus,
+- [x] **M1.4** App `students`: `Student` + constraints (`unique` por campus,
   índice `qr_token_hash`). `V:` migration aplica as constraints.
-- [ ] **M1.5** Geração de token QR + `qr_token_hash` (HMAC com pepper).
+- [x] **M1.5** Geração de token QR + `qr_token_hash` (HMAC com pepper).
   `V:` teste unitário do hash e do gerador.
 - [ ] **M1.6** Importação CSV/XLSX com prévia e relatório de rejeitadas
   (`ImportJob`). `V:` importar arquivo de teste; linhas ruins rejeitadas.
 - [ ] **M1.7** Exportação de QR (folha de impressão). `V:` gerar e imprimir um
   lote; QR lido confere com o estudante.
 - [ ] **M1.8** App `audit` + `AuditEvent`; log de ações administrativas.
+  Modelo e admin prontos (eventos imutáveis); falta instrumentar as ações.
   `V:` eventos gravados ao criar/editar.
+
+> Scaffold inicial entregue na branch `feat/scaffold-django`: modelos,
+> migrations (incl. índices únicos parciais), admin e 10 testes verdes
+> (`docs/05-testes.md`). Modelos de `menus` e `distributions` também já
+> existem, mas a lógica de negócio (M2) ainda não.
 
 **Aceite do marco:** importar uma base de teste, localizar estudante, imprimir
 QR e impedir matrícula duplicada.

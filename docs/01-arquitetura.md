@@ -45,30 +45,36 @@ Regras de dependência:
 - `audit` é uma folha (não importa os demais) e é acionado por todos;
 - `accounts` não depende de domínio, exceto por `campus_id` nullable.
 
-## 3. Layout de repositório previsto (Fase 2)
+## 3. Layout de repositório (Fase 2 — implementado como scaffold)
 
 ```
 pnae_app/
-├── config/                 # projeto Django (Dockerfile, entrypoint.sh)
+├── config/                 # projeto Django (settings/, urls, wsgi, asgi)
 ├── apps/                   # apps de domínio
 ├── templates/              # templates compartilhados
-├── static/                 # fontes de front (Tailwind/HTMX)
+├── static/                 # fontes de front (Tailwind via CDN no MVP)
 ├── requirements.txt
 ├── manage.py
+├── pytest.ini
+├── Dockerfile
+├── entrypoint.sh
 ├── docker-compose.dev.yml  # portas publicadas, DEBUG=True, runserver
 ├── docker-compose.yml      # prod, sem portas expostas, atrás do Traefik
 └── .env.example
 ```
 
-> Ainda não criado (Fase 2). Documentado aqui para fixar a decisão.
-
 ## 4. Ambientes
 
-- **dev:** `docker-compose.dev.yml`, `DEBUG=True`, `ALLOWED_HOSTS=*`,
-  `runserver` com reload, portas publicadas no host.
+- **dev:** `docker-compose.dev.yml`, `DEBUG=True`, `runserver` com reload,
+  porta **8601** publicada no host (DB em 5433). Contêiner `pnae_app_django`
+  (não `app_django`, que já é usado pelo `ifeventos_app` na mesma máquina).
 - **prod:** `docker-compose.yml`, `DEBUG=False`, Gunicorn, TLS no Traefik,
-  Postgres com backup automatizado, sem portas de banco expostas.
+  sem portas de banco expostas.
+- Banco em **volume Docker nomeado** (`pgdata`) em ambos — evita problemas de
+  permissão de bind mount e simplifica o backup via `pg_dump`.
 - Segredos via `.env` (nunca versionado; `.env.example` é o modelo).
+- `DJANGO_SETTINGS_MODULE`: `config.settings.dev` (dev) / `config.settings.prod`
+  (prod). `manage.py` assume `dev` por padrão.
 
 ## 5. Camadas e responsabilidades
 

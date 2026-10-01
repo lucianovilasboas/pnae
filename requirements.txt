@@ -1,0 +1,26 @@
+# =====================================================================
+# IFMG Alimenta (PNAE) — dependências Python
+# ---------------------------------------------------------------------
+# Versões fixadas para build reproduzível. Ao atualizar, teste localmente
+# (docker compose -f docker-compose.dev.yml up -d --build) antes do deploy.
+# =====================================================================
+
+Django==5.2.17
+python-decouple==3.8
+dj-database-url==3.1.2
+psycopg2-binary==2.9.12
+
+# Geração de QR Code
+Pillow==12.3.0
+qrcode==8.2
+
+# Importação de estudantes (XLSX/CSV)
+openpyxl==3.1.5
+
+# Servidor de produção e arquivos estáticos
+gunicorn==26.2.0
+whitenoise==6.12.0
+
+# Testes
+pytest==8.3.4
+pytest-django==4.9.0

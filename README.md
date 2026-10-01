@@ -9,10 +9,38 @@ autorização e motivo.
 - **Plano de produto (MVP):** [`plano_mvp_ifmg_alimenta.md`](plano_mvp_ifmg_alimenta.md)
 - **Plano de implementação (engenharia):** [`docs/`](docs/)
 
-> **Status:** fase de planejamento. Ainda não há código de aplicação. Este
-> repositório contém, por enquanto, apenas a documentação de produto e de
-> implementação. O scaffold do projeto está previsto para a Fase 2 (ver
-> [`docs/04-marcos.md`](docs/04-marcos.md)).
+> **Status:** scaffold pronto (Marco 1.1). Existem projeto Django, apps,
+> modelos, migrations (com o índice único parcial que garante a entrega
+> regular única), admin, Docker Compose e testes. A lógica de leitura/entrega
+> (`/scan`) ainda não foi implementada — ver
+> [`docs/04-marcos.md`](docs/04-marcos.md).
+
+## Como rodar (desenvolvimento)
+
+```bash
+cp .env.example .env                 # e ajuste se necessário
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+Acesse http://127.0.0.1:8601/ (admin em `/admin/`). O banco de dados é um
+volume Docker (`pgdata`). Pare com:
+
+```bash
+docker compose -f docker-compose.dev.yml down       # mantém os dados
+docker compose -f docker-compose.dev.yml down -v    # apaga o volume
+```
+
+Crie o primeiro usuário administrador:
+
+```bash
+docker exec -it pnae_app_django python manage.py createsuperuser
+```
+
+Rode os testes:
+
+```bash
+docker exec pnae_app_django bash -lc 'cd /pnae_app && python -m pytest'
+```
 
 ---
 

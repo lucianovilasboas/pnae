@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}IFMG Alimenta{% endblock %}</title>
+  {# ADR-004: Tailwind via CDN no MVP; build standalone depois. #}
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800">
+  <header class="bg-emerald-700 text-white shadow">
+    <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+      <a href="{% url 'distributions:home' %}" class="text-lg font-semibold">IFMG Alimenta</a>
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="rounded bg-emerald-800 px-3 py-1 text-sm hover:bg-emerald-900">
+            Sair ({{ user.get_short_name }})
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

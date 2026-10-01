@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Painel — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4 text-2xl font-bold">Painel inicial</h1>
+
+  {% if current_distribution %}
+    <section class="mb-6 rounded-lg bg-white p-5 shadow">
+      <h2 class="text-lg font-semibold text-emerald-700">Distribuição aberta</h2>
+      <p class="mt-1 text-sm text-slate-600">
+        {{ current_distribution.service_date }} —
+        {{ current_distribution.get_meal_type_display }} —
+        {{ current_distribution.campus.name }}
+      </p>
+
+      {% if summary %}
+        <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div class="rounded bg-slate-50 p-3 text-center">
+            <dt class="text-xs uppercase text-slate-500">Aptos</dt>
+            <dd class="text-2xl font-bold">{{ summary.eligible }}</dd>
+          </div>
+          <div class="rounded bg-emerald-50 p-3 text-center">
+            <dt class="text-xs uppercase text-slate-500">Regulares</dt>
+            <dd class="text-2xl font-bold text-emerald-700">{{ summary.regularValid }}</dd>
+          </div>
+          <div class="rounded bg-amber-50 p-3 text-center">
+            <dt class="text-xs uppercase text-slate-500">Excedentes</dt>
+            <dd class="text-2xl font-bold text-amber-700">{{ summary.extrasValid }}</dd>
+          </div>
+          <div class="rounded bg-slate-50 p-3 text-center">
+            <dt class="text-xs uppercase text-slate-500">Pendentes</dt>
+            <dd class="text-2xl font-bold">{{ summary.pending }}</dd>
+          </div>
+        </dl>
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="rounded-lg bg-white p-5 text-slate-600 shadow">
+      Nenhuma distribuição aberta no momento.
+    </section>
+  {% endif %}
+{% endblock %}

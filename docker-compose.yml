@@ -1,0 +1,81 @@
+# =====================================================================
+# IFMG Alimenta (PNAE) — PRODUÇÃO
+# ---------------------------------------------------------------------
+# Alvo: VPS com Traefik e rede externa "proxy". Nenhuma porta é publicada
+# no host: o público entra pelo Traefik (80/443).
+#
+#   cp .env.example .env      # e preencha (USE_HTTPS_PROXY=True)
+#   docker compose up -d --build
+#
+# Troque o domínio abaixo pelo domínio real antes de publicar.
+# Para desenvolvimento local, use docker-compose.dev.yml.
+# =====================================================================
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+
+  app:
+    container_name: pnae_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pnae_app:latest
+    restart: unless-stopped
+    logging: *default-logging
+    command: ./entrypoint.sh
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      APP_SERVER: gunicorn
+      APP_PORT: "8601"
+      APP_WORKERS: "3"
+    env_file:
+      - .env
+    volumes:
+      - ./media:/pnae_app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.pnae.rule=Host(`pnae.lucianovilasboas.com.br`)"
+      - "traefik.http.routers.pnae.entrypoints=websecure"
+      - "traefik.http.routers.pnae.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pnae.service=pnae"
+      - "traefik.http.services.pnae.loadbalancer.server.port=8601"
+
+  db:
+    container_name: pnae_db
+    image: postgres:16
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-django_db}
+      POSTGRES_USER: ${POSTGRES_USER:-django_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-django_password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-django_user} -d ${POSTGRES_DB:-django_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - default
+
+networks:
+  default:
+  proxy:
+    external: true
+
+volumes:
+  pgdata:
