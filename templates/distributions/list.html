@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Distribuições — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4 text-2xl font-bold">Distribuições</h1>
+
+  <form method="post" class="mb-6 rounded-lg bg-white p-5 shadow">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create">
+    <h2 class="mb-3 font-semibold">Nova distribuição</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm">Data
+        <input type="date" name="service_date" required class="mt-1 w-full rounded border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Refeição
+        <select name="meal_type" class="mt-1 w-full rounded border border-slate-300 p-2">
+          <option value="LUNCH">Almoço</option>
+          <option value="DINNER">Jantar</option>
+          <option value="SNACK">Lanche</option>
+          <option value="OTHER">Outro</option>
+        </select>
+      </label>
+      <label class="text-sm">Início previsto
+        <input type="datetime-local" name="planned_start_at" required class="mt-1 w-full rounded border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Fim previsto
+        <input type="datetime-local" name="planned_end_at" required class="mt-1 w-full rounded border border-slate-300 p-2">
+      </label>
+    </div>
+    <button type="submit"
+            class="mt-4 rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">
+      Criar rascunho
+    </button>
+  </form>
+
+  <div class="overflow-hidden rounded-lg bg-white shadow">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-left text-slate-500">
+        <tr>
+          <th class="p-3">Data</th><th>Refeição</th><th>Campus</th><th>Situação</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for distribution in distributions %}
+          <tr class="border-t">
+            <td class="p-3">{{ distribution.service_date }}</td>
+            <td>{{ distribution.get_meal_type_display }}</td>
+            <td>{{ distribution.campus.name }}</td>
+            <td>
+              <span class="rounded px-2 py-0.5 text-xs
+                {% if distribution.status == 'OPEN' %}bg-emerald-100 text-emerald-800
+                {% elif distribution.status == 'DRAFT' %}bg-slate-100 text-slate-700
+                {% else %}bg-amber-100 text-amber-800{% endif %}">
+                {{ distribution.get_status_display }}
+              </span>
+            </td>
+            <td class="p-3 text-right">
+              {% if distribution.status == 'DRAFT' %}
+                <form method="post" class="inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="open">
+                  <input type="hidden" name="id" value="{{ distribution.pk }}">
+                  <button class="rounded bg-emerald-700 px-3 py-1 text-white">Abrir</button>
+                </form>
+              {% elif distribution.status == 'OPEN' %}
+                <a href="{% url 'distributions:operation' distribution.pk %}"
+                   class="rounded bg-emerald-700 px-3 py-1 text-white">Operar</a>
+                <a href="{% url 'distributions:pending' distribution.pk %}"
+                   class="rounded border border-slate-300 px-3 py-1">Pendentes</a>
+                <form method="post" class="inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="close">
+                  <input type="hidden" name="id" value="{{ distribution.pk }}">
+                  <button class="rounded border border-slate-300 px-3 py-1">Encerrar</button>
+                </form>
+              {% else %}
+                <a href="{% url 'distributions:pending' distribution.pk %}"
+                   class="rounded border border-slate-300 px-3 py-1">Pendentes</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="p-4 text-center text-slate-500">Nenhuma distribuição.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

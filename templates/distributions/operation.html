@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Operação — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <div class="mb-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Operação de entrega</h1>
+      <p class="text-sm text-slate-600">
+        {{ distribution.service_date }} — {{ distribution.get_meal_type_display }} —
+        {{ distribution.campus.name }} ({{ distribution.get_status_display }})
+      </p>
+    </div>
+    <a href="{% url 'distributions:list' %}"
+       class="rounded border border-slate-300 px-3 py-1 text-sm">Voltar</a>
+  </div>
+
+  {% if distribution.status != 'OPEN' %}
+    <div class="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+      Esta distribuição não está aberta. Abra-a na lista de distribuições para operar.
+    </div>
+  {% endif %}
+
+  <div id="feedback"
+       class="mb-4 rounded-lg border-2 border-slate-200 bg-white p-6 text-center">
+    <div id="feedback-title" class="text-2xl font-bold text-slate-500">Pronto para ler</div>
+    <div id="feedback-detail" class="mt-1 text-slate-600">Escaneie o QR Code do estudante.</div>
+  </div>
+
+  <div class="mb-6 flex gap-2">
+    <input id="scan" type="text" autofocus autocomplete="off"
+           placeholder="Token do QR (scanner USB) + Enter"
+           class="flex-1 rounded border border-slate-300 p-3 text-lg">
+    <button id="cam-toggle" type="button" hidden
+            class="rounded bg-slate-700 px-4 py-2 text-white">Câmera</button>
+  </div>
+  <video id="video" class="mb-6 hidden w-full max-w-sm rounded" playsinline></video>
+
+  <section class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="rounded bg-white p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Aptos</div>
+      <div id="t-eligible" class="text-2xl font-bold">{{ summary.eligible }}</div>
+    </div>
+    <div class="rounded bg-emerald-50 p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Regulares</div>
+      <div id="t-regular" class="text-2xl font-bold text-emerald-700">{{ summary.regularValid }}</div>
+    </div>
+    <div class="rounded bg-amber-50 p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Excedentes</div>
+      <div id="t-extras" class="text-2xl font-bold text-amber-700">{{ summary.extrasValid }}</div>
+    </div>
+    <div class="rounded bg-white p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Pendentes</div>
+      <div id="t-pending" class="text-2xl font-bold">{{ summary.pending }}</div>
+    </div>
+  </section>
+
+  <div id="extra-box" class="hidden rounded-lg border border-amber-300 bg-amber-50 p-4">
+    <p class="mb-2 text-sm text-amber-800">
+      Entrega excedente exige autorização e motivo. O autorizador é o usuário atual.
+    </p>
+    <input id="extra-reason" type="text" placeholder="Motivo"
+           class="mb-2 w-full rounded border border-slate-300 p-2">
+    <button id="extra-confirm" type="button"
+            class="rounded bg-amber-700 px-4 py-2 text-white">Registrar excedente</button>
+  </div>
+
+  <script>
+    const CSRF = "{{ csrf_token }}";
+    const SCAN_URL = "{% url 'distributions_api:scan' distribution.pk %}";
+    const EXTRAS_URL = "{% url 'distributions_api:extras' distribution.pk %}";
+    const SUMMARY_URL = "{% url 'distributions_api:summary' distribution.pk %}";
+
+    const input = document.getElementById('scan');
+    const fb = document.getElementById('feedback');
+    const fbTitle = document.getElementById('feedback-title');
+    const fbDetail = document.getElementById('feedback-detail');
+    const extraBox = document.getElementById('extra-box');
+    let lastToken = null;
+
+    function focusInput() { input.focus(); }
+
+    function paint(result, data) {
+      const styles = {
+        DELIVERED: ['border-emerald-500', 'bg-emerald-50', 'text-emerald-700', 'Entregue'],
+        ALREADY_DELIVERED: ['border-red-500', 'bg-red-50', 'text-red-700', 'Já entregue'],
+        INVALID_TOKEN: ['border-amber-500', 'bg-amber-50', 'text-amber-700', 'QR inválido'],
+        INELIGIBLE: ['border-amber-500', 'bg-amber-50', 'text-amber-700', 'Inelegível'],
+        DISTRIBUTION_CLOSED: ['border-amber-500', 'bg-amber-50', 'text-amber-700', 'Distribuição fechada'],
+      };
+      const s = styles[result] || ['border-slate-300', 'bg-white', 'text-slate-700', 'Resultado'];
+      fb.className = 'mb-4 rounded-lg border-2 p-6 text-center ' + s[0] + ' ' + s[1];
+      fbTitle.className = 'text-2xl font-bold ' + s[2];
+      fbTitle.textContent = s[3];
+      let detail = data.message || '';
+      if (data.student) {
+        detail = `${data.student.name} — ${data.student.className || 'sem turma'} ` +
+                 `(${data.student.registrationNumber})`;
+      }
+      fbDetail.textContent = detail;
+      extraBox.classList.toggle('hidden', result !== 'ALREADY_DELIVERED');
+    }
+
+    async function post(url, body) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify(body),
+      });
+      return { status: response.status, data: await response.json() };
+    }
+
+    async function submitToken(token) {
+      lastToken = token;
+      try {
+        const { data } = await post(SCAN_URL, { token });
+        paint(data.result, data);
+        refreshTotals();
+      } catch (e) {
+        paint('INVALID_TOKEN', { message: 'Falha de rede.' });
+      }
+      input.value = '';
+      focusInput();
+    }
+
+    async function refreshTotals() {
+      try {
+        const response = await fetch(SUMMARY_URL);
+        const s = await response.json();
+        document.getElementById('t-eligible').textContent = s.eligible;
+        document.getElementById('t-regular').textContent = s.regularValid;
+        document.getElementById('t-extras').textContent = s.extrasValid;
+        document.getElementById('t-pending').textContent = s.pending;
+      } catch (e) { /* silencioso */ }
+    }
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const token = input.value.trim();
+        input.value = '';
+        if (token) submitToken(token);
+      }
+    });
+
+    document.getElementById('extra-confirm').addEventListener('click', async () => {
+      const reason = document.getElementById('extra-reason').value.trim();
+      if (!lastToken || !reason) {
+        alert('Informe o motivo.');
+        return;
+      }
+      const { data } = await post(EXTRAS_URL, { token: lastToken, reason });
+      paint(data.result || 'ALREADY_DELIVERED', data);
+      document.getElementById('extra-reason').value = '';
+      refreshTotals();
+    });
+
+    // Câmera: usa a API nativa BarcodeDetector quando disponível.
+    if ('BarcodeDetector' in window) {
+      const camBtn = document.getElementById('cam-toggle');
+      const video = document.getElementById('video');
+      camBtn.hidden = false;
+      let stream = null;
+      let timer = null;
+      camBtn.addEventListener('click', async () => {
+        if (stream) {
+          clearInterval(timer);
+          stream.getTracks().forEach((t) => t.stop());
+          stream = null;
+          video.classList.add('hidden');
+          camBtn.textContent = 'Câmera';
+          return;
+        }
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        video.classList.remove('hidden');
+        await video.play();
+        camBtn.textContent = 'Parar câmera';
+        const detector = new BarcodeDetector({ formats: ['qr_code'] });
+        timer = setInterval(async () => {
+          const codes = await detector.detect(video);
+          if (codes.length) {
+            submitToken(codes[0].rawValue);
+          }
+        }, 500);
+      });
+    }
+
+    focusInput();
+    refreshTotals();
+    setInterval(refreshTotals, 5000);
+  </script>
+{% endblock %}

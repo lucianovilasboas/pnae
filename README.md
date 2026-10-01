@@ -9,13 +9,23 @@ autorização e motivo.
 - **Plano de produto (MVP):** [`plano_mvp_ifmg_alimenta.md`](plano_mvp_ifmg_alimenta.md)
 - **Plano de implementação (engenharia):** [`docs/`](docs/)
 
-> **Status:** Marco 1 quase completo. Existem projeto Django, apps, modelos,
-> migrations (com o índice único parcial que garante a entrega regular única),
-> admin, Docker Compose e testes. Importação de estudantes (CSV/XLSX, com
-> prévia) e exportação de QR Codes já funcionam para administradores
-> (`/estudantes/importar/` e `/estudantes/qr/`). A lógica de leitura/entrega
-> (`/scan`) ainda não foi implementada — ver
+> **Status:** Marcos 1 e 2 entregues. Projeto Django completo (apps, modelos,
+> migrations com índice único parcial), admin, Docker Compose, importação de
+> estudantes (CSV/XLSX), QR Codes e **operação de entrega** com leitura
+> atômica (`/scan`), bloqueio de duplicidade e totais ao vivo. Próximo:
+> Marco 3 (excedente/estorno/relatório) — ver
 > [`docs/04-marcos.md`](docs/04-marcos.md).
+
+## Telas principais
+
+| Tela | Rota |
+|---|---|
+| Painel | `/` |
+| Distribuições (criar/abrir/encerrar) | `/distribuicoes/` |
+| Operação de entrega | `/distribuicoes/<id>/operar/` |
+| Pendentes | `/distribuicoes/<id>/pendentes/` |
+| Importar estudantes | `/estudantes/importar/` |
+| QR Codes | `/estudantes/qr/` |
 
 ## Como rodar (desenvolvimento)
 

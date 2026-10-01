@@ -68,20 +68,26 @@ QR e impedir matrícula duplicada.
 
 ## Marco 2 — Núcleo de distribuição (4–6 dias)
 
-- [ ] **M2.1** App `menus`: `Menu` + admin. `V:` CRUD de cardápio.
-- [ ] **M2.2** App `distributions`: `Distribution` com máquina de estados e
+- [x] **M2.1** App `menus`: `Menu` + admin. `V:` CRUD de cardápio.
+- [x] **M2.2** App `distributions`: `Distribution` com máquina de estados e
   índice único parcial de `OPEN`. `V:` não permite duas `OPEN` iguais.
-- [ ] **M2.3** `Delivery` + constraints (índice único parcial `REGULAR VALIDA`,
+- [x] **M2.3** `Delivery` + constraints (índice único parcial `REGULAR VALIDA`,
   checks). `V:` migration aplica a constraint.
-- [ ] **M2.4** Service do `/scan` atômico (ver `03-api.md` §4).
+- [x] **M2.4** Service do `/scan` atômico (ver `03-api.md` §4).
   `V:` teste de integração das 5 respostas de negócio.
-- [ ] **M2.5** Tela de operação (HTMX): campo focado, recuperação de foco,
-  scanner USB, botão de câmera, feedback verde/vermelho/amarelo.
-  `V:` simular leitura por teclado e conferir feedback.
-- [ ] **M2.6** Painel de totais ao vivo (`summary`). `V:` totais coerentes após
+- [x] **M2.5** Tela de operação (HTMX/JS): campo focado, recuperação de foco,
+  scanner USB, botão de câmera (BarcodeDetector quando disponível), feedback
+  verde/vermelho/amarelo. `V:` simular leitura por teclado e conferir feedback.
+- [x] **M2.6** Painel de totais ao vivo (`summary`). `V:` totais coerentes após
   leituras.
-- [ ] **M2.7** Teste de concorrência de duplicidade. `V:` ver `05-testes.md`
+- [x] **M2.7** Teste de concorrência de duplicidade. `V:` ver `05-testes.md`
   (§4); exatamente uma entrega `REGULAR` válida.
+
+> Marco 2 entregue na branch `feat/distributions-scan`: serviços transacionais
+> (criar/abrir/encerrar, `/scan`, excedente, estorno, resumo, pendentes),
+> endpoints JSON, tela de operação, lista de distribuições e lista de
+> pendentes. Inclui teste de concorrência real (`TransactionTestCase` com
+> threads) que prova a unicidade pela constraint do banco.
 
 **Aceite do marco:** simulação de ≥ 50 leituras com entrega correta,
 duplicidade bloqueada e totais coerentes.

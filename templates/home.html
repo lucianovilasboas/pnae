@@ -33,6 +33,15 @@
           </div>
         </dl>
       {% endif %}
+
+      <div class="mt-4 flex gap-2">
+        <a href="{% url 'distributions:operation' current_distribution.pk %}"
+           class="rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">
+          Operar
+        </a>
+        <a href="{% url 'distributions:pending' current_distribution.pk %}"
+           class="rounded border border-slate-300 px-4 py-2">Pendentes</a>
+      </div>
     </section>
   {% else %}
     <section class="rounded-lg bg-white p-5 text-slate-600 shadow">
