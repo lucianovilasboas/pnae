@@ -1,0 +1,52 @@
+# =====================================================================
+# IFMG Alimenta (PNAE) — o que NÃO vai para o repositório
+# ---------------------------------------------------------------------
+# Regra: o repositório leva código e configuração de exemplo.
+# Segredos, dados de runtime e artefatos de desenvolvimento ficam fora.
+# =====================================================================
+
+# ---------- Segredos (NUNCA versionar) ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials*
+
+# ---------- Ambientes virtuais e caches Python ----------
+.venv/
+venv/
+env/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---------- Dependências de front ----------
+node_modules/
+
+# ---------- Banco local e dados de runtime ----------
+*.sqlite3
+postgres_data/
+pgadmin_data/
+staticfiles/
+media/
+
+# ---------- Dados de importação (LGPD: nunca versionar bases reais) ----------
+dados-importacao/
+*.xlsx
+*.xls
+*.csv
+!docs/**/*.csv
+
+# ---------- Sistema operacional e editores ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
