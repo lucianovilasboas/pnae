@@ -110,10 +110,14 @@ index (campus_id, occurred_at), (entity_type, entity_id)
 
 ### ImportJob (`apps/students`)
 ```text
-id, campus_id FK, file_name, created_by FK(User), created_at,
+id, campus_id FK, file_name, source_file (arquivo enviado, MEDIA),
+created_by FK(User), created_at,
 status ∈ {PENDING, VALIDATING, PREVIEW, APPLIED, FAILED},
 total_rows, imported_rows, rejected_rows, error_report_path null
 ```
+- `source_file` guarda o arquivo para permitir a releitura no momento de
+  aplicar a prévia (a validação não grava estudantes).
+- `error_report_path` aponta para o CSV de linhas rejeitadas em MEDIA.
 
 ## 4. Constraints no PostgreSQL (obrigatórias)
 

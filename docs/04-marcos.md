@@ -42,13 +42,19 @@ Sem código. Destrava o backend.
   índice `qr_token_hash`). `V:` migration aplica as constraints.
 - [x] **M1.5** Geração de token QR + `qr_token_hash` (HMAC com pepper).
   `V:` teste unitário do hash e do gerador.
-- [ ] **M1.6** Importação CSV/XLSX com prévia e relatório de rejeitadas
+- [x] **M1.6** Importação CSV/XLSX com prévia e relatório de rejeitadas
   (`ImportJob`). `V:` importar arquivo de teste; linhas ruins rejeitadas.
-- [ ] **M1.7** Exportação de QR (folha de impressão). `V:` gerar e imprimir um
+- [x] **M1.7** Exportação de QR (folha de impressão). `V:` gerar e imprimir um
   lote; QR lido confere com o estudante.
 - [ ] **M1.8** App `audit` + `AuditEvent`; log de ações administrativas.
-  Modelo e admin prontos (eventos imutáveis); falta instrumentar as ações.
+  Modelo, admin e `record_event` prontos; eventos de importação e QR já
+  gravados. Falta instrumentar as demais ações administrativas.
   `V:` eventos gravados ao criar/editar.
+
+> Importação e QR entregues na branch `feat/students-import-qr`: importer
+> CSV/XLSX com prévia/aplicação em duas fases, folha de impressão de QR com
+> rotação explícita de token, endpoints JSON e páginas para administrador.
+> Rotação de token invalida QRs antigos por decisão (ADR-002).
 
 > Scaffold inicial entregue na branch `feat/scaffold-django`: modelos,
 > migrations (incl. índices únicos parciais), admin e 10 testes verdes

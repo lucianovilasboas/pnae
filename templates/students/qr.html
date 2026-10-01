@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}QR Codes — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <h1 class="mb-2 text-2xl font-bold">Exportar QR Codes</h1>
+  <div class="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+    <strong>Atenção:</strong> esta exportação <strong>rotaciona</strong> os tokens
+    dos estudantes selecionados. QR Codes impressos antes deixam de valer.
+    Marque “somente quem ainda não tem token” para não invalidar crachás já emitidos.
+  </div>
+
+  <form method="post" action="{% url 'students:qr-export' %}" target="_blank"
+        class="rounded-lg bg-white p-5 shadow">
+    {% csrf_token %}
+    <label class="block text-sm font-medium">Turma (opcional)</label>
+    <select name="class_group" class="mt-1 w-full rounded border border-slate-300 p-2">
+      <option value="">Todas as turmas</option>
+      {% for group in class_groups %}
+        <option value="{{ group.pk }}">{{ group.name }} — {{ group.academic_year }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="mt-4 flex items-center gap-2 text-sm">
+      <input type="checkbox" name="only_missing">
+      Gerar apenas para quem ainda não tem token
+    </label>
+
+    <button type="submit"
+            class="mt-4 rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">
+      Gerar folha de impressão
+    </button>
+  </form>
+{% endblock %}

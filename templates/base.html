@@ -12,17 +12,36 @@
     <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
       <a href="{% url 'distributions:home' %}" class="text-lg font-semibold">IFMG Alimenta</a>
       {% if user.is_authenticated %}
-        <form method="post" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button class="rounded bg-emerald-800 px-3 py-1 text-sm hover:bg-emerald-900">
-            Sair ({{ user.get_short_name }})
-          </button>
-        </form>
+        <nav class="flex items-center gap-4 text-sm">
+          {% if user.is_superuser or user.role == 'ADMIN' %}
+            <a href="{% url 'students_pages:import-page' %}" class="hover:underline">Importar</a>
+            <a href="{% url 'students_pages:qr-page' %}" class="hover:underline">QR Codes</a>
+            <a href="/admin/" class="hover:underline">Admin</a>
+          {% endif %}
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="rounded bg-emerald-800 px-3 py-1 text-sm hover:bg-emerald-900">
+              Sair ({{ user.get_short_name }})
+            </button>
+          </form>
+        </nav>
       {% endif %}
     </div>
   </header>
 
   <main class="mx-auto max-w-5xl px-4 py-6">
+    {% if messages %}
+      <div class="mb-4 space-y-2">
+        {% for message in messages %}
+          <div class="rounded border px-3 py-2 text-sm
+                      {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-700
+                      {% elif message.tags == 'success' %}border-emerald-300 bg-emerald-50 text-emerald-700
+                      {% else %}border-slate-300 bg-white text-slate-700{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 </body>

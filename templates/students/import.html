@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Importar estudantes — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <h1 class="mb-2 text-2xl font-bold">Importar estudantes</h1>
+  <p class="mb-4 text-sm text-slate-600">
+    Envie um arquivo CSV ou XLSX. Colunas aceitas (o cabeçalho é reconhecido
+    pelos nomes): <code>matricula</code>, <code>nome</code>, <code>turma</code>
+    e <code>email</code> (opcional). A prévia não altera a base.
+  </p>
+
+  <form method="post" enctype="multipart/form-data" class="rounded-lg bg-white p-5 shadow">
+    {% csrf_token %}
+    <input type="file" name="file" accept=".csv,.xlsx" required
+           class="block w-full rounded border border-slate-300 p-2">
+    <button type="submit"
+            class="mt-4 rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">
+      Validar arquivo
+    </button>
+  </form>
+{% endblock %}

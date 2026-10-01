@@ -50,6 +50,7 @@ class ImportJob(models.Model):
         "campus.Campus", on_delete=models.PROTECT, related_name="import_jobs", verbose_name="campus"
     )
     file_name = models.CharField("arquivo", max_length=255)
+    source_file = models.FileField("arquivo enviado", upload_to="imports/%Y/%m/", blank=True)
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.PROTECT, related_name="import_jobs", verbose_name="autor"
     )

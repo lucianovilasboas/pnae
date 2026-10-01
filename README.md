@@ -9,9 +9,11 @@ autorização e motivo.
 - **Plano de produto (MVP):** [`plano_mvp_ifmg_alimenta.md`](plano_mvp_ifmg_alimenta.md)
 - **Plano de implementação (engenharia):** [`docs/`](docs/)
 
-> **Status:** scaffold pronto (Marco 1.1). Existem projeto Django, apps,
-> modelos, migrations (com o índice único parcial que garante a entrega
-> regular única), admin, Docker Compose e testes. A lógica de leitura/entrega
+> **Status:** Marco 1 quase completo. Existem projeto Django, apps, modelos,
+> migrations (com o índice único parcial que garante a entrega regular única),
+> admin, Docker Compose e testes. Importação de estudantes (CSV/XLSX, com
+> prévia) e exportação de QR Codes já funcionam para administradores
+> (`/estudantes/importar/` e `/estudantes/qr/`). A lógica de leitura/entrega
 > (`/scan`) ainda não foi implementada — ver
 > [`docs/04-marcos.md`](docs/04-marcos.md).
 
