@@ -52,14 +52,14 @@ CONTAINER_FILE="/pnae_app/$FILE"
 docker exec "$CONTAINER" test -f "$CONTAINER_FILE" \
     || erro "o arquivo não está visível no contêiner em $CONTAINER_FILE. Copie-o para a raiz do projeto."
 
-ARGS=(python manage.py import_roster "$CONTAINER_FILE"
-      --campus "$CAMPUS" --academic-year "$YEAR" --user "$USER_EMAIL" --dry-run)
+BASE=(python manage.py import_roster "$CONTAINER_FILE"
+      --campus "$CAMPUS" --academic-year "$YEAR" --user "$USER_EMAIL")
 if [ -n "$CAMPUS_NAME" ]; then
-    ARGS+=(--campus-name "$CAMPUS_NAME")
+    BASE+=(--campus-name "$CAMPUS_NAME")
 fi
 
 echo "-> PRÉVIA (não grava)"
-docker exec "$CONTAINER" "${ARGS[@]}"
+docker exec "$CONTAINER" "${BASE[@]}" --dry-run
 
 if [ "$APPLY" != "1" ]; then
     echo
@@ -68,8 +68,7 @@ if [ "$APPLY" != "1" ]; then
     exit 0
 fi
 
-ARGS=("${ARGS[@]/--dry-run/}")
 echo
 echo "-> APLICANDO"
-docker exec "$CONTAINER" "${ARGS[@]}"
+docker exec "$CONTAINER" "${BASE[@]}"
 echo "ok: importação aplicada."
