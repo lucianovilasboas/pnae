@@ -20,8 +20,14 @@ COLUMN_ALIASES = {
     "full_name": {"nome", "nome completo", "full_name", "name"},
     "email": {"email", "e-mail"},
     "class_group": {"turma", "class_group", "classe", "grupo"},
-    "course": {"curso", "descricao do curso", "course"},
+    "course": {"descricao do curso", "curso", "course"},
+    "course_code": {"codigo curso", "codigo do curso", "course_code"},
     "active": {"situacao no curso", "situacao", "status", "situacao do aluno"},
+    "cpf": {"cpf"},
+    "sexo": {"sexo"},
+    "situation_period": {"situacao no periodo"},
+    "school_origin": {"tipo de escola de origem", "escola de origem"},
+    "plan_row": {"#", "n", "numero", "linha"},
 }
 
 REQUIRED_FIELDS = ("registration_number", "full_name")
@@ -29,6 +35,23 @@ REQUIRED_FIELDS = ("registration_number", "full_name")
 # Situações que mantêm o estudante ativo. Qualquer outra situação preenchida
 # resulta em estudante inativo.
 ACTIVE_STATUSES = {"matriculado", "ativo", "cursando", "regularmente matriculado"}
+
+# Mapeamento fixo do código de turma da planilha para o rótulo de exibição.
+CLASS_GROUP_LABELS = {
+    "I1PNIADMI1": "ADM 1",
+    "I2PNIADMI1": "ADM 2",
+    "I3PNIADMI1": "ADM 3",
+    "I1PNIINFO1": "Info 1A",
+    "I1PNIINFO2": "Info 1B",
+    "I2PNIINFO1": "Info 2A",
+    "I2PNIINFO2": "Info 2B",
+    "I3PNIINFO1": "Info 3",
+}
+
+
+def class_group_label(code: str) -> str:
+    """Rótulo de exibição para um código de turma (fallback: o próprio código)."""
+    return CLASS_GROUP_LABELS.get((code or "").strip().upper(), (code or "").strip())
 
 
 @dataclass
@@ -38,9 +61,17 @@ class ParsedRow:
     full_name: str
     email: str
     class_group: ClassGroup | None = None
-    class_group_name: str = ""
+    class_group_source: str = ""  # código original (ex.: I1PNIADMI1)
+    class_group_name: str = ""  # nome a persistir (código)
+    class_group_label: str = ""  # rótulo de exibição (ex.: ADM 1)
     course: str = ""
+    course_code: str = ""
     active: bool = True
+    cpf: str = ""
+    sexo: str = ""
+    situation_period: str = ""
+    school_origin: str = ""
+    plan_row: str = ""
 
 
 @dataclass
@@ -145,7 +176,13 @@ def parse_roster(
         email = cell("email")
         group_name = cell("class_group")
         course = cell("course")
+        course_code = cell("course_code")
         status = cell("active")
+        cpf = cell("cpf")
+        sexo = cell("sexo")
+        situation_period = cell("situation_period")
+        school_origin = cell("school_origin")
+        plan_row = cell("plan_row")
 
         if not registration and not full_name:
             continue  # linha em branco
@@ -179,9 +216,17 @@ def parse_roster(
                 full_name=full_name,
                 email=email,
                 class_group=class_group,
+                class_group_source=group_name,
                 class_group_name=group_name,
+                class_group_label=class_group_label(group_name),
                 course=course,
+                course_code=course_code,
                 active=active,
+                cpf=cpf,
+                sexo=sexo,
+                situation_period=situation_period,
+                school_origin=school_origin,
+                plan_row=plan_row,
             )
         )
         seen_registrations.add(registration)

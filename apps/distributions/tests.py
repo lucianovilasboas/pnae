@@ -506,3 +506,25 @@ class MobileCardsTests(DistributionFixture):
         ).content.decode()
         self.assertIn("focus: false", body)
         self.assertIn("pointer: coarse", body)
+
+
+class PwaTests(DistributionFixture):
+    def test_manifest_e_service_worker(self):
+        manifest = self.client.get(reverse("manifest"))
+        self.assertEqual(manifest.status_code, 200)
+        data = manifest.json()
+        self.assertEqual(data["display"], "standalone")
+        self.assertEqual(data["short_name"], "IFMG Alimenta")
+        self.assertTrue(any(i.get("purpose") == "maskable" for i in data["icons"]))
+
+        sw = self.client.get(reverse("service-worker"))
+        self.assertEqual(sw.status_code, 200)
+        self.assertIn("application/javascript", sw["Content-Type"])
+        self.assertIn("CACHE", sw.content.decode())
+
+    def test_base_traz_manifest(self):
+        self.client.force_login(self.operator)
+        body = self.client.get(reverse("distributions:home")).content.decode()
+        self.assertIn('rel="manifest"', body)
+        self.assertIn("apple-touch-icon", body)
+        self.assertIn("serviceWorker", body)

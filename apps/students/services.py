@@ -90,13 +90,27 @@ def apply_import(*, job: ImportJob, user):
                 campus=job.campus,
                 name=row.class_group_name,
                 academic_year=job.academic_year,
-                defaults={"course": row.course},
+                defaults={
+                    "course": row.course,
+                    "display_name": row.class_group_label,
+                    "source_code": row.class_group_source,
+                },
             )
             if created:
                 groups_created += 1
-            elif row.course and not group.course:
-                group.course = row.course
-                group.save(update_fields=["course"])
+            else:
+                changed = []
+                if row.course and not group.course:
+                    group.course = row.course
+                    changed.append("course")
+                if row.class_group_label and group.display_name != row.class_group_label:
+                    group.display_name = row.class_group_label
+                    changed.append("display_name")
+                if row.class_group_source and not group.source_code:
+                    group.source_code = row.class_group_source
+                    changed.append("source_code")
+                if changed:
+                    group.save(update_fields=changed)
 
         Student.objects.update_or_create(
             campus=job.campus,
@@ -104,6 +118,13 @@ def apply_import(*, job: ImportJob, user):
             defaults={
                 "full_name": row.full_name,
                 "email": row.email or "",
+                "cpf": row.cpf,
+                "sexo": row.sexo,
+                "course": row.course,
+                "course_code": row.course_code,
+                "situation_period": row.situation_period,
+                "school_origin": row.school_origin,
+                "plan_row": row.plan_row,
                 "class_group": group,
                 "active": row.active,
             },

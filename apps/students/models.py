@@ -21,6 +21,13 @@ class Student(models.Model):
     registration_number = models.CharField("matrícula", max_length=40)
     full_name = models.CharField("nome completo", max_length=200)
     email = models.EmailField("e-mail", blank=True)
+    cpf = models.CharField("CPF", max_length=20, blank=True)
+    sexo = models.CharField("sexo", max_length=20, blank=True)
+    course_code = models.CharField("código do curso", max_length=40, blank=True)
+    course = models.CharField("curso", max_length=120, blank=True)
+    situation_period = models.CharField("situação no período", max_length=60, blank=True)
+    school_origin = models.CharField("tipo de escola de origem", max_length=60, blank=True)
+    plan_row = models.CharField("linha da planilha", max_length=20, blank=True)
     class_group = models.ForeignKey(
         "campus.ClassGroup",
         on_delete=models.SET_NULL,

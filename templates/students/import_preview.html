@@ -72,7 +72,7 @@
             <div class="text-sm font-medium">{{ row.full_name }}</div>
             <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
               <span class="rounded-full bg-white px-2 py-0.5">{{ row.registration_number }}</span>
-              <span class="rounded-full bg-white px-2 py-0.5">{{ row.class_group.name|default:"sem turma" }}</span>
+              <span class="rounded-full bg-white px-2 py-0.5">{{ row.class_group.label|default:"sem turma" }}</span>
             </div>
           </li>
         {% endfor %}
@@ -87,7 +87,7 @@
             <tr class="border-b">
               <td class="py-1">{{ row.registration_number }}</td>
               <td>{{ row.full_name }}</td>
-              <td>{{ row.class_group.name|default:"—" }}</td>
+              <td>{{ row.class_group.label|default:"—" }}</td>
             </tr>
           {% endfor %}
         </tbody>

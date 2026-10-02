@@ -7,10 +7,13 @@ from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
 from apps.audit.views import healthcheck
+from config.pwa import manifest, service_worker
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("healthz/", healthcheck, name="healthcheck"),
+    path("manifest.webmanifest", manifest, name="manifest"),
+    path("service-worker.js", service_worker, name="service-worker"),
     path(
         "login/",
         auth_views.LoginView.as_view(template_name="registration/login.html"),

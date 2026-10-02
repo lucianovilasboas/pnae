@@ -128,7 +128,8 @@ a view chama o service, que abre a transação e usa a constraint do banco como
 - exibir apenas o necessário (nome, turma, matrícula são aceitáveis para
   reduzir erro);
 - **registrar antes de exibir “entregue”** — nunca o contrário;
-- PWA: manifesto + ícones; cache somente de estáticos no MVP.
+- Operação por scanner USB e câmera; **app instalável (PWA)**: `manifest` +
+  ícones + service worker (cache só de estáticos; nenhuma operação offline).
 
 ## 9. Não-objetivos de arquitetura (MVP)
 

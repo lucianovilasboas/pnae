@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+{% load static %}
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}IFMG Alimenta{% endblock %}</title>
   {# ADR-004: Tailwind via CDN no MVP; build standalone depois. #}
   <script src="https://cdn.tailwindcss.com"></script>
+  {# PWA: instalável (manifest + service worker + ícones). #}
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <meta name="theme-color" content="#047857">
+  <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="IFMG Alimenta">
   <style>
     /* Esconde o marcador nativo do <summary> (ícone do hambúrguer é próprio). */
     summary.menu-toggle::-webkit-details-marker { display: none; }
@@ -70,5 +77,57 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
+
+  {# Botão "Instalar app" (PWA). Aparece quando o navegador permitir. #}
+  <div id="install-bar" class="fixed inset-x-0 bottom-0 z-40 hidden p-3">
+    <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 rounded-2xl bg-slate-900/95 px-4 py-3 text-white shadow-xl">
+      <span id="install-text" class="text-sm">Instalar o IFMG Alimenta no aparelho?</span>
+      <div class="flex gap-2">
+        <button id="install-accept" class="rounded-full bg-emerald-600 px-3 py-1.5 text-sm">Instalar</button>
+        <button id="install-dismiss" class="rounded-full border border-white/30 px-3 py-1.5 text-sm">Agora não</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('{% url "service-worker" %}', { scope: '/' }).catch(() => {});
+      });
+    }
+
+    (function () {
+      const bar = document.getElementById('install-bar');
+      const text = document.getElementById('install-text');
+      const accept = document.getElementById('install-accept');
+      const dismiss = document.getElementById('install-dismiss');
+      let deferred = null;
+
+      function hide() { bar.classList.add('hidden'); }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferred = e;
+        bar.classList.remove('hidden');
+      });
+
+      accept.addEventListener('click', async () => {
+        hide();
+        if (deferred) { deferred.prompt(); deferred = null; }
+      });
+      dismiss.addEventListener('click', hide);
+      window.addEventListener('appinstalled', hide);
+
+      // iOS (Safari) não dispara beforeinstallprompt: mostra a dica manual.
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const standalone = window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches;
+      if (isIos && !standalone) {
+        text.textContent = 'Para instalar: toque em Compartilhar → Adicionar à Tela de Início.';
+        accept.classList.add('hidden');
+        bar.classList.remove('hidden');
+      }
+    })();
+  </script>
 </body>
 </html>

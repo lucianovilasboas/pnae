@@ -58,8 +58,10 @@ proposto** para não travar a implementação; confirmar antes do piloto.
 - **Consequência:** `Delivery.status=ESTORNADA` + `AuditEvent`; original
   preservado.
 
-### ADR-006 — PWA com cache apenas de estáticos
+### ADR-006 — App instalável (PWA), sem operação offline
 
-- **Status:** aceito.
-- **Decisão:** manifesto + ícones + service worker só para estáticos; nenhuma
-  operação offline no MVP.
+- **Status:** aceito (implementado).
+- **Decisão:** `manifest` + ícones + service worker instalável no celular e no
+  desktop; cache **apenas** de estáticos. Navegação e APIs (`/api/*`, `/scan`,
+  `/healthz`) sempre vão à rede — nenhuma operação offline no MVP.
+- **Rotas:** `/manifest.webmanifest` e `/service-worker.js`.

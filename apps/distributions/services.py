@@ -326,7 +326,7 @@ def report_rows(distribution):
             {
                 "matricula": delivery.student.registration_number,
                 "nome": delivery.student.full_name,
-                "turma": delivery.student.class_group.name if delivery.student.class_group else "",
+                "turma": delivery.student.class_group.label if delivery.student.class_group else "",
                 "tipo": delivery.delivery_type,
                 "situacao": delivery.status,
                 "entregue_em": delivery.delivered_at.isoformat(),

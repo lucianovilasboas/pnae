@@ -1,6 +1,6 @@
 # IFMG Alimenta (PNAE)
 
-Sistema web responsivo/PWA para registrar e acompanhar a **distribuição de
+Sistema web responsivo/PWA (instalável) para registrar e acompanhar a **distribuição de
 alimentação escolar por QR Code** do PNAE no IFMG. O foco do MVP é uma sessão
 de distribuição rápida e **auditável**: ler o QR do estudante, registrar a
 entrega regular, bloquear duplicidade e permitir excedente somente com
@@ -42,7 +42,8 @@ códigos de barras 1D via ZXing; a câmera requer HTTPS).
 | Auditoria | `/auditoria/` |
 
 Roteiro do operador (1 página) em
-[`docs/09-treinamento-operador.md`](docs/09-treinamento-operador.md).
+[`docs/09-treinamento-operador.md`](docs/09-treinamento-operador.md). Deploy em
+produção (OVM-1) em [`docs/10-deploy-ovm1.md`](docs/10-deploy-ovm1.md).
 
 ## Como rodar (desenvolvimento)
 
@@ -81,7 +82,7 @@ docker exec pnae_app_django bash -lc 'cd /pnae_app && python -m pytest'
 | Banco | PostgreSQL 16 |
 | UI | Django templates + HTMX + Tailwind CSS |
 | QR Code | biblioteca Python; token opaco armazenado como hash |
-| PWA | manifesto + ícones + HTTPS; cache só de estáticos no MVP |
+| PWA | app instalável: manifest + ícones + service worker (cache só de estáticos) |
 | Empacotamento | Docker / Docker Compose (dev e prod) |
 
 Justificativa e alternativas descartadas em

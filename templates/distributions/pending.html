@@ -30,7 +30,7 @@
         <div class="font-semibold">{{ student.full_name }}</div>
         <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
           <span class="rounded-full bg-slate-100 px-2 py-0.5">{{ student.registration_number }}</span>
-          <span class="rounded-full bg-slate-100 px-2 py-0.5">{{ student.class_group.name|default:"sem turma" }}</span>
+          <span class="rounded-full bg-slate-100 px-2 py-0.5">{{ student.class_group.label|default:"sem turma" }}</span>
         </div>
       </li>
     {% empty %}
@@ -51,7 +51,7 @@
           <tr class="border-t">
             <td class="whitespace-nowrap p-3">{{ student.registration_number }}</td>
             <td>{{ student.full_name }}</td>
-            <td class="whitespace-nowrap">{{ student.class_group.name|default:"—" }}</td>
+            <td class="whitespace-nowrap">{{ student.class_group.label|default:"—" }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="3" class="p-4 text-center text-slate-500">Ninguém pendente.</td></tr>

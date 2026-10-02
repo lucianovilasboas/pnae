@@ -21,7 +21,9 @@ class ClassGroup(models.Model):
     campus = models.ForeignKey(
         Campus, on_delete=models.PROTECT, related_name="class_groups", verbose_name="campus"
     )
-    name = models.CharField("turma", max_length=120)
+    name = models.CharField("turma (código)", max_length=120)
+    display_name = models.CharField("turma (exibição)", max_length=120, blank=True)
+    source_code = models.CharField("código de origem", max_length=60, blank=True)
     course = models.CharField("curso", max_length=120, blank=True)
     academic_year = models.PositiveIntegerField("ano letivo")
     active = models.BooleanField("ativa", default=True)
@@ -37,5 +39,9 @@ class ClassGroup(models.Model):
             )
         ]
 
+    @property
+    def label(self):
+        return self.display_name or self.name
+
     def __str__(self):
-        return f"{self.name} — {self.academic_year}"
+        return f"{self.label} — {self.academic_year}"

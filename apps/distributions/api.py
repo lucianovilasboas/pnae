@@ -67,7 +67,7 @@ def _serialize_student(student):
         "id": student.pk,
         "name": student.full_name,
         "registrationNumber": student.registration_number,
-        "className": student.class_group.name if student.class_group else None,
+        "className": student.class_group.label if student.class_group else None,
     }
 
 
@@ -240,7 +240,7 @@ def distribution_pending(request, pk):
                     "id": student.pk,
                     "name": student.full_name,
                     "registrationNumber": student.registration_number,
-                    "className": student.class_group.name if student.class_group else None,
+                    "className": student.class_group.label if student.class_group else None,
                 }
                 for student in students[:500]
             ],

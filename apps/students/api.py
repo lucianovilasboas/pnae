@@ -56,7 +56,7 @@ def _serialize_preview(job, valid, errors):
                 "line": row.line,
                 "registrationNumber": row.registration_number,
                 "name": row.full_name,
-                "className": row.class_group.name if row.class_group else None,
+                "className": row.class_group.label if row.class_group else None,
             }
             for row in valid[:50]
         ],
@@ -212,7 +212,7 @@ def qr_export(request):
             img=qr_data_uri(token),
             name=escape(student.full_name),
             registration=escape(student.registration_number),
-            class_name=escape(student.class_group.name if student.class_group else "—"),
+            class_name=escape(student.class_group.label if student.class_group else "—"),
         )
         for student, token in generated
     )
