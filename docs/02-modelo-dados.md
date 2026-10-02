@@ -80,7 +80,9 @@ created_at, updated_at
 index (campus_id, service_date, status)
 ```
 - Máquina de estados: `DRAFT → OPEN → CLOSED`; `CANCELED` a partir de
-  `DRAFT`/`OPEN`. **Encerrada não reabre** no MVP (cria nova sessão).
+  `DRAFT`/`OPEN`. Uma distribuição `CLOSED` **pode ser reaberta no mesmo dia**
+  (registrando `distribution.reopened` na auditoria); fora do dia, criar nova
+  sessão.
 - Apenas uma `OPEN` por `(campus_id, service_date, meal_type)` — reforçar com
   índice único parcial (ver §4).
 

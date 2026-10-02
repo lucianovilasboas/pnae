@@ -119,6 +119,15 @@
                 <button class="rounded-full border border-slate-300 px-3 py-1.5">Encerrar</button>
               </form>
             {% endif %}
+            {% if distribution.status == 'CLOSED' and distribution.can_reopen %}
+              <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reopen">
+                <input type="hidden" name="id" value="{{ distribution.pk }}">
+                <button class="rounded-full border border-emerald-300 px-3 py-1.5 text-emerald-700"
+                        onclick="return confirm('Reabrir esta distribuição?');">Reabrir</button>
+              </form>
+            {% endif %}
           {% endif %}
         </div>
       </li>
@@ -181,6 +190,15 @@
                       <input type="hidden" name="action" value="close">
                       <input type="hidden" name="id" value="{{ distribution.pk }}">
                       <button class="whitespace-nowrap rounded border border-slate-300 px-3 py-1">Encerrar</button>
+                    </form>
+                  {% endif %}
+                  {% if distribution.status == 'CLOSED' and distribution.can_reopen %}
+                    <form method="post" class="inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="reopen">
+                      <input type="hidden" name="id" value="{{ distribution.pk }}">
+                      <button class="whitespace-nowrap rounded border border-emerald-300 px-3 py-1 text-emerald-700"
+                              onclick="return confirm('Reabrir esta distribuição?');">Reabrir</button>
                     </form>
                   {% endif %}
                 {% endif %}

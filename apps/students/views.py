@@ -24,6 +24,18 @@ def _require_admin(request):
     return None
 
 
+IMPORT_CRUMBS = [
+    {"label": "Início", "url": "/"},
+    {"label": "Estudantes"},
+    {"label": "Importar"},
+]
+QR_CRUMBS = [
+    {"label": "Início", "url": "/"},
+    {"label": "Estudantes"},
+    {"label": "QR Codes"},
+]
+
+
 @login_required
 def import_page(request):
     denied = _require_admin(request)
@@ -54,11 +66,12 @@ def import_page(request):
                         "valid_total": len(valid),
                         "errors": errors[:100],
                         "new_groups": missing_group_names(campus, valid),
+                        "breadcrumbs": IMPORT_CRUMBS,
                     },
                 )
-        return render(request, "students/import.html")
+        return render(request, "students/import.html", {"breadcrumbs": IMPORT_CRUMBS})
 
-    return render(request, "students/import.html")
+    return render(request, "students/import.html", {"breadcrumbs": IMPORT_CRUMBS})
 
 
 @login_required
@@ -96,4 +109,8 @@ def qr_page(request):
     groups = ClassGroup.objects.none()
     if campus is not None:
         groups = ClassGroup.objects.filter(campus=campus, active=True).order_by("name")
-    return render(request, "students/qr.html", {"class_groups": groups, "campus": campus})
+    return render(
+        request,
+        "students/qr.html",
+        {"class_groups": groups, "campus": campus, "breadcrumbs": QR_CRUMBS},
+    )

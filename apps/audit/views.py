@@ -71,5 +71,9 @@ def audit_list(request):
                 "from": request.GET.get("from", ""),
                 "to": request.GET.get("to", ""),
             },
+            "breadcrumbs": [
+                {"label": "Início", "url": "/"},
+                {"label": "Auditoria"},
+            ],
         },
     )

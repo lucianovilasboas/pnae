@@ -96,6 +96,14 @@ class Distribution(models.Model):
     def __str__(self):
         return f"{self.service_date} — {self.get_meal_type_display()} ({self.get_status_display()})"
 
+    @property
+    def can_reopen(self):
+        """Encerrada e do dia de hoje (regra: reabrir só no mesmo dia)."""
+        return (
+            self.status == DistributionStatus.CLOSED
+            and self.service_date == timezone.localdate()
+        )
+
     # -- Transições de estado (a lógica transacional entra na Fase 2) ------
     def mark_opened(self, user):
         self.status = DistributionStatus.OPEN

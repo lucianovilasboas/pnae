@@ -77,5 +77,9 @@ def menu_list(request):
             "campus": campus,
             "meal_types": MealType.choices,
             "filters": {"de": request.GET.get("de", ""), "ate": request.GET.get("ate", "")},
+            "breadcrumbs": [
+                {"label": "Início", "url": "/"},
+                {"label": "Cardápios"},
+            ],
         },
     )

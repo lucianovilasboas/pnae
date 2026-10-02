@@ -63,6 +63,7 @@
   </header>
 
   <main class="mx-auto max-w-5xl px-4 py-6">
+    {% include "_breadcrumbs.html" %}
     {% if messages %}
       <div class="mb-4 space-y-2">
         {% for message in messages %}
@@ -103,12 +104,19 @@
       const dismiss = document.getElementById('install-dismiss');
       let deferred = null;
 
-      function hide() { bar.classList.add('hidden'); }
+      function show() {
+        bar.classList.remove('hidden');
+        document.body.style.paddingBottom = '6rem'; // não cobre os botões
+      }
+      function hide() {
+        bar.classList.add('hidden');
+        document.body.style.paddingBottom = '';
+      }
 
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferred = e;
-        bar.classList.remove('hidden');
+        show();
       });
 
       accept.addEventListener('click', async () => {
@@ -125,7 +133,7 @@
       if (isIos && !standalone) {
         text.textContent = 'Para instalar: toque em Compartilhar → Adicionar à Tela de Início.';
         accept.classList.add('hidden');
-        bar.classList.remove('hidden');
+        show();
       }
     })();
   </script>

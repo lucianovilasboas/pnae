@@ -72,7 +72,7 @@ def distribution_list(request):
         action = request.POST.get("action")
         if action == "create":
             _handle_create(request, campus)
-        elif action in {"open", "close"}:
+        elif action in {"open", "close", "reopen"}:
             _handle_transition(request, action, campus)
         return redirect("distributions:list")
 
@@ -106,6 +106,10 @@ def distribution_list(request):
             "page": page,
             "querystring": query.urlencode(),
             "campus": campus,
+            "breadcrumbs": [
+                {"label": "Início", "url": "/"},
+                {"label": "Distribuições"},
+            ],
             "menus": Menu.objects.filter(campus=campus).order_by("-service_date")[:30]
             if campus
             else Menu.objects.none(),
@@ -157,6 +161,9 @@ def _handle_transition(request, action, campus):
         if action == "open":
             services.open_distribution(distribution=distribution, user=request.user)
             messages.success(request, "Distribuição aberta.")
+        elif action == "reopen":
+            services.reopen_distribution(distribution=distribution, user=request.user)
+            messages.success(request, "Distribuição reaberta.")
         else:
             services.close_distribution(distribution=distribution, user=request.user)
             messages.success(request, "Distribuição encerrada.")
@@ -164,6 +171,21 @@ def _handle_transition(request, action, campus):
         messages.error(request, str(exc))
     except Exception:
         messages.error(request, "Não foi possível abrir: já existe distribuição aberta.")
+
+
+def _distribution_crumbs(distribution, current_label=None):
+    """Migalhas: Início › Distribuições › <data — refeição> [› <tela>]."""
+    label = f"{distribution.service_date:%d/%m/%Y} — {distribution.get_meal_type_display()}"
+    crumbs = [
+        {"label": "Início", "url": "/"},
+        {"label": "Distribuições", "url": "/distribuicoes/"},
+        {"label": label, "url": f"/distribuicoes/{distribution.pk}/operar/"},
+    ]
+    if current_label:
+        crumbs.append({"label": current_label})
+    else:
+        crumbs[-1].pop("url")
+    return crumbs
 
 
 @login_required
@@ -178,7 +200,11 @@ def operation(request, pk):
     return render(
         request,
         "distributions/operation.html",
-        {"distribution": distribution, "summary": summary},
+        {
+            "distribution": distribution,
+            "summary": summary,
+            "breadcrumbs": _distribution_crumbs(distribution),
+        },
     )
 
 
@@ -206,6 +232,7 @@ def pending(request, pk):
             "students": students,
             "groups": groups,
             "selected_group": class_group,
+            "breadcrumbs": _distribution_crumbs(distribution, "Pendentes"),
         },
     )
 
@@ -241,7 +268,12 @@ def deliveries(request, pk):
     return render(
         request,
         "distributions/deliveries.html",
-        {"distribution": distribution, "deliveries": items, "can_reverse": can_reverse(request.user)},
+        {
+            "distribution": distribution,
+            "deliveries": items,
+            "can_reverse": can_reverse(request.user),
+            "breadcrumbs": _distribution_crumbs(distribution, "Entregas"),
+        },
     )
 
 
@@ -254,7 +286,11 @@ def report(request, pk):
     _campus, queryset = _scoped_distributions(request)
     distribution = get_object_or_404(queryset, pk=pk)
     data = services.distribution_report(distribution)
-    return render(request, "distributions/report.html", {"distribution": distribution, **data})
+    return render(
+        request,
+        "distributions/report.html",
+        {**data, "distribution": distribution, "breadcrumbs": _distribution_crumbs(distribution, "Relatório")},
+    )
 
 
 @login_required
@@ -304,6 +340,11 @@ def batch(request):
         "selected_weekdays": {0, 1, 2, 3, 4},
         "form": {},
         "preview": None,
+        "breadcrumbs": [
+            {"label": "Início", "url": "/"},
+            {"label": "Distribuições", "url": "/distribuicoes/"},
+            {"label": "Criar em lote"},
+        ],
     }
 
     if request.method == "POST":

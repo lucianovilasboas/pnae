@@ -108,6 +108,43 @@ def close_distribution(*, distribution, user):
     return distribution
 
 
+def reopen_distribution(*, distribution, user):
+    """Reabre uma distribuição encerrada **do dia de hoje** (RN: só no mesmo dia)."""
+    if distribution.status != DistributionStatus.CLOSED:
+        raise DistributionStateError("Só é possível reabrir uma distribuição encerrada.")
+    if distribution.service_date != timezone.localdate():
+        raise DistributionStateError(
+            "Só é possível reabrir uma distribuição encerrada do dia de hoje."
+        )
+    try:
+        with transaction.atomic():
+            distribution.status = DistributionStatus.OPEN
+            distribution.opened_by = user
+            distribution.opened_at = timezone.now()
+            distribution.closed_by = None
+            distribution.closed_at = None
+            distribution.save(
+                update_fields=[
+                    "status", "opened_by", "opened_at",
+                    "closed_by", "closed_at", "updated_at",
+                ]
+            )
+    except IntegrityError as exc:
+        distribution.refresh_from_db()
+        raise DistributionStateError(
+            "Já existe uma distribuição aberta para este campus, data e refeição."
+        ) from exc
+
+    record_event(
+        action="distribution.reopened",
+        entity_type="Distribution",
+        entity_id=distribution.pk,
+        actor=user,
+        campus=distribution.campus,
+    )
+    return distribution
+
+
 # ---------------------------------------------------------------------------
 # Leitura e entrega
 # ---------------------------------------------------------------------------

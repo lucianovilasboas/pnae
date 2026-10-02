@@ -581,3 +581,55 @@ class BulkDistributionTests(DistributionFixture):
         )
         self.assertEqual(preview.status_code, 200)
         self.assertContains(preview, "a criar")
+
+
+class ReopenTests(DistributionFixture):
+    def test_reabre_no_mesmo_dia(self):
+        from apps.audit.models import AuditEvent
+
+        services.close_distribution(distribution=self.distribution, user=self.operator)
+        self.distribution.refresh_from_db()
+        self.assertTrue(self.distribution.can_reopen)
+
+        services.reopen_distribution(distribution=self.distribution, user=self.operator)
+        self.distribution.refresh_from_db()
+        self.assertEqual(self.distribution.status, DistributionStatus.OPEN)
+        self.assertIsNone(self.distribution.closed_at)
+        self.assertIsNone(self.distribution.closed_by)
+        self.assertTrue(AuditEvent.objects.filter(action="distribution.reopened").exists())
+
+    def test_nao_reabre_outro_dia(self):
+        self.distribution.service_date = timezone.localdate() - timedelta(days=1)
+        self.distribution.save(update_fields=["service_date"])
+        services.close_distribution(distribution=self.distribution, user=self.operator)
+        self.distribution.refresh_from_db()
+        self.assertFalse(self.distribution.can_reopen)
+        with self.assertRaises(services.DistributionStateError):
+            services.reopen_distribution(distribution=self.distribution, user=self.operator)
+
+    def test_view_reabrir(self):
+        services.close_distribution(distribution=self.distribution, user=self.operator)
+        self.client.force_login(self.operator)
+        response = self.client.post(
+            reverse("distributions:list"),
+            {"action": "reopen", "id": self.distribution.pk},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.distribution.refresh_from_db()
+        self.assertEqual(self.distribution.status, DistributionStatus.OPEN)
+
+
+class BreadcrumbsTests(DistributionFixture):
+    def test_operacao_tem_migalhas(self):
+        self.client.force_login(self.operator)
+        response = self.client.get(
+            reverse("distributions:operation", args=[self.distribution.pk])
+        )
+        self.assertContains(response, 'aria-label="Breadcrumb"')
+        self.assertContains(response, "Início")
+        self.assertContains(response, "Distribuições")
+
+    def test_painel_sem_migalhas(self):
+        self.client.force_login(self.operator)
+        response = self.client.get(reverse("distributions:home"))
+        self.assertNotContains(response, 'aria-label="Breadcrumb"')

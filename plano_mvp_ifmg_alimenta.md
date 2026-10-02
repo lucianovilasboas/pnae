@@ -145,7 +145,7 @@ O perfil Gestor é somente leitura no MVP. A autorização de excedente pode ser
 
 `RASCUNHO → ABERTA → ENCERRADA`
 
-Opcionalmente, `CANCELADA` a partir de RASCUNHO ou ABERTA, com motivo e registro de auditoria. Não reabrir uma distribuição encerrada no MVP: criar nova sessão evita ambiguidade no histórico.
+Opcionalmente, `CANCELADA` a partir de RASCUNHO ou ABERTA, com motivo e registro de auditoria. Uma distribuição encerrada pode ser **reaberta no mesmo dia** (com registro de auditoria); fora do dia, criar nova sessão evita ambiguidade no histórico.
 
 ---
 
