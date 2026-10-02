@@ -36,6 +36,7 @@ postgres_data/
 pgadmin_data/
 staticfiles/
 media/
+backups/
 
 # ---------- Dados de importação (LGPD: nunca versionar bases reais) ----------
 dados-importacao/

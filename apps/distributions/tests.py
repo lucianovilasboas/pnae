@@ -399,3 +399,38 @@ class DeliveriesPageTests(DistributionFixture):
         )
         self.result.delivery.refresh_from_db()
         self.assertEqual(self.result.delivery.status, DeliveryStatus.VALIDA)
+
+
+class PilotDrillTests(TestCase):
+    def setUp(self):
+        self.campus = Campus.objects.create(name="Campus Drill", code="DRL")
+        User.objects.create_superuser(
+            email="root@example.org", password="x", name="Root", campus=self.campus
+        )
+
+    def test_drill_encerra_coerente(self):
+        from django.core.management import call_command
+
+        call_command(
+            "pilot_drill",
+            "--campus",
+            "DRL",
+            "--students",
+            "55",
+            "--duplicates",
+            "10",
+            "--extras",
+            "3",
+            "--reversals",
+            "2",
+        )
+        distribution = Distribution.objects.get(campus=self.campus, meal_type="OTHER")
+        self.assertEqual(distribution.status, DistributionStatus.CLOSED)
+        summary = services.distribution_summary(distribution)
+        self.assertEqual(summary["regularValid"], 55 - 2)
+        self.assertEqual(summary["extrasValid"], 3)
+        self.assertEqual(summary["reversed"], 2)
+        self.assertEqual(
+            Delivery.objects.filter(distribution=distribution, delivery_type=DeliveryType.REGULAR).count(),
+            55,
+        )

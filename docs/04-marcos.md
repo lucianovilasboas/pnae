@@ -125,15 +125,24 @@ estornos com o histórico de eventos.
 
 ## Marco 4 — Piloto e estabilização (5–10 dias, conforme operação)
 
-- [ ] **M4.1** Homologação com dados reais controlados.
-  `V:` importação real sem duplicidade não tratada.
+- [x] **M4.1** Homologação com dados reais controlados.
+  `V:` importação real (Ponte Nova, 309 alunos) sem duplicidade não tratada;
+  ensaio de 60 leituras coerente.
 - [ ] **M4.2** Ensaio operacional e treinamento curto. `V:` operador executa o
-  fluxo sem apoio técnico.
-- [ ] **M4.3** Piloto em uma distribuição. `V:` sessão real concluída.
+  fluxo sem apoio técnico. (Ensaio automatizado pronto; treinamento pendente.)
+- [ ] **M4.3** Piloto em uma distribuição. `V:` sessão real concluída. (Pendente
+  de decisão institucional.)
 - [ ] **M4.4** Correções de usabilidade e publicação.
   `V:` checklist de segurança (`07-seguranca-lgpd.md` §8) completo.
-- [ ] **M4.5** Backup + restauração testados. `V:` restauração bem-sucedida
+  (`check --deploy` sem avisos de app; resta trocar `SECRET_KEY` do ambiente.)
+- [x] **M4.5** Backup + restauração testados. `V:` restauração bem-sucedida
   registrada.
+
+> Ferramentas de piloto entregues na branch `feat/pilot-hardening`:
+> comando `pilot_drill` (ensaio ≥50 leituras com verificação de totais),
+> `scripts/backup_db.sh` e `scripts/restore_db.sh` (restauração validada em
+> banco de teste) e `docs/08-operacao.md` (runbook). Falta o que depende de
+> pessoas/instituição: treinamento, sessão real e publicação.
 
 **Aceite de produção:** operador opera sem apoio técnico; backup e contingência
 documentados.

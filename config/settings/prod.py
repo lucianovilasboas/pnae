@@ -7,7 +7,8 @@ DEBUG = False
 # O proxy (Traefik) faz o TLS e repassa X-Forwarded-Proto.
 USE_HTTPS_PROXY = config("USE_HTTPS_PROXY", default=True, cast=bool)  # noqa: F405
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") if USE_HTTPS_PROXY else None
-SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=USE_HTTPS_PROXY, cast=bool)  # noqa: F405
+# Em produção o padrão é redirecionar HTTP -> HTTPS (independe de confiar no proxy).
+SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)  # noqa: F405
 
 # Cookies exigem HTTPS.
 SESSION_COOKIE_SECURE = True

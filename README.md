@@ -9,13 +9,20 @@ autorização e motivo.
 - **Plano de produto (MVP):** [`plano_mvp_ifmg_alimenta.md`](plano_mvp_ifmg_alimenta.md)
 - **Plano de implementação (engenharia):** [`docs/`](docs/)
 
-> **Status:** Marcos 1, 2 e 3 entregues. Projeto Django completo (apps, modelos,
-> migrations com índice único parcial), admin auditado, Docker Compose,
-> importação de estudantes (CSV/XLSX), QR Codes, **operação de entrega** com
-> leitura atômica (`/scan`) e bloqueio de duplicidade, **relatório diário**
-> (página imprimível + CSV), estorno auditável e tela de auditoria. Próximo:
-> Marco 4 (piloto e estabilização) — ver
-> [`docs/04-marcos.md`](docs/04-marcos.md).
+> **Status:** Marcos 0–3 completos e Marco 4 com as ferramentas de piloto
+> prontas: projeto Django (apps, modelos, migrations com índice único parcial),
+> admin auditado, Docker Compose, importação de estudantes (CSV/XLSX, com
+> criação de turmas), QR Codes, operação de entrega com leitura atômica
+> (`/scan`), relatório diário, estorno/auditoria, **ensaio de volume**
+> (`pilot_drill`) e **backup/restauração** documentados. Dados reais de Ponte
+> Nova carregados (309 alunos). Falta o que depende de pessoas/instituição:
+> treinamento e sessão piloto — ver [`docs/04-marcos.md`](docs/04-marcos.md).
+
+## Operação
+
+Runbook em [`docs/08-operacao.md`](docs/08-operacao.md): backup
+(`./scripts/backup_db.sh`), restauração (`./scripts/restore_db.sh`), ensaio
+(`python manage.py pilot_drill --campus PN --students 60`) e deploy.
 
 ## Telas principais
 
