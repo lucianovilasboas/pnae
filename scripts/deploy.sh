@@ -6,7 +6,11 @@
 # stack (migrate + collectstatic rodam no entrypoint) e espera o healthz.
 #
 # Uso:
-#   ./scripts/deploy.sh [--skip-build] [--no-wait]
+#   ./scripts/deploy.sh [--skip-build] [--no-wait] [--reset-db] [--yes]
+#
+#   --reset-db  apaga o volume do banco (pgdata) e sobe do zero.
+#               Use quando a senha mudou e o volume é antigo. DESTRUTIVO.
+#   --yes       não confirma o --reset-db (para automação).
 #
 # Pré-requisitos na máquina:
 #   - docker e docker compose;
@@ -17,12 +21,16 @@ set -euo pipefail
 
 SKIP_BUILD=0
 WAIT=1
+RESET_DB=0
+ASSUME_YES=0
 for arg in "$@"; do
     case "$arg" in
         --skip-build) SKIP_BUILD=1 ;;
         --no-wait)    WAIT=0 ;;
+        --reset-db)   RESET_DB=1 ;;
+        --yes|-y)     ASSUME_YES=1 ;;
         -h|--help)
-            echo "uso: $0 [--skip-build] [--no-wait]"
+            echo "uso: $0 [--skip-build] [--no-wait] [--reset-db] [--yes]"
             exit 0 ;;
         *) echo "argumento desconhecido: $arg" >&2; exit 2 ;;
     esac
@@ -48,27 +56,56 @@ docker network inspect proxy >/dev/null 2>&1 \
 [ -f "$ENV_FILE" ] || erro ".env não encontrado. Copie .env.example e preencha antes."
 ok "docker, compose e rede proxy presentes"
 
-# Valida campos obrigatórios do .env (sem imprimir segredos).
 get_env() { grep -E "^$1=" "$ENV_FILE" | tail -n1 | cut -d= -f2- ; }
-SENTINEL="troque-por"
+trim() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' ; }
 
-for key in SECRET_KEY QR_PEPPER POSTGRES_PASSWORD DATABASE_URL ALLOWED_HOSTS CSRF_TRUSTED_ORIGINS; do
+SENTINEL="troque-por"
+for key in SECRET_KEY QR_PEPPER POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB ALLOWED_HOSTS CSRF_TRUSTED_ORIGINS; do
     value="$(get_env "$key" || true)"
     [ -n "$value" ] || erro "$key ausente/vazio no .env."
 done
 
-[ "$(get_env DEBUG || true)" = "False" ] || erro "DEBUG deve ser False no .env de produção."
-[ "$(get_env USE_HTTPS_PROXY || true)" = "True" ] || erro "USE_HTTPS_PROXY deve ser True no .env."
+[ "$(trim "$(get_env DEBUG || true)")" = "False" ] || erro "DEBUG deve ser False no .env de produção."
+[ "$(trim "$(get_env USE_HTTPS_PROXY || true)")" = "True" ] || erro "USE_HTTPS_PROXY deve ser True no .env."
 
 case "$(get_env SECRET_KEY)" in *"$SENTINEL"*) erro "SECRET_KEY ainda é o valor de exemplo." ;; esac
 case "$(get_env QR_PEPPER)"  in *"$SENTINEL"*) erro "QR_PEPPER ainda é o valor de exemplo." ;; esac
 
+# Senha do banco: precisa ser URL-safe (a DATABASE_URL é uma URL) e não a padrão.
+DB_PASS="$(get_env POSTGRES_PASSWORD)"
+[ "$DB_PASS" = "django_password" ] && erro \
+    "POSTGRES_PASSWORD ainda é a padrão ('django_password'). Gere com: python3 -c \"import secrets;print(secrets.token_hex(24))\""
+if printf '%s' "$DB_PASS" | grep -qE '[^A-Za-z0-9_-]'; then
+    erro "POSTGRES_PASSWORD tem caractere inválido (espaço ou símbolo fora de letras/números/-/_). Gere com: python3 -c \"import secrets;print(secrets.token_hex(24))\""
+fi
+
 case "$(get_env ALLOWED_HOSTS)" in *"$DOMAIN"*) : ;; *) erro "ALLOWED_HOSTS deve conter $DOMAIN." ;; esac
 case "$(get_env CSRF_TRUSTED_ORIGINS)" in *"https://$DOMAIN"*) : ;; *) erro "CSRF_TRUSTED_ORIGINS deve conter https://$DOMAIN." ;; esac
-ok ".env validado (DEBUG=False, HTTPS, domínio configurado)"
+ok ".env validado (DEBUG=False, HTTPS, domínio e senha de banco ok)"
+
+# Aviso sobre volume de banco pré-existente.
+if docker volume ls --format '{{.Name}}' | grep -q 'pgdata$'; then
+    echo "AVISO: já existe um volume pgdata (posição do banco). Se você mudou"
+    echo "       POSTGRES_PASSWORD depois de um 'up' anterior, o banco ainda tem a"
+    echo "       senha antiga e o deploy vai falhar com 'password authentication failed'."
+    echo "       Nesse caso, rode com --reset-db (APAGA os dados do banco)."
+fi
 
 # ---------------------------------------------------------------------
-# 2. Subir a stack
+# 2. (Opcional) Resetar o banco
+# ---------------------------------------------------------------------
+if [ "$RESET_DB" = "1" ]; then
+    echo "AVISO: --reset-db vai APAGAR o volume do banco (pgdata)."
+    if [ "$ASSUME_YES" != "1" ]; then
+        read -r -p "Confirmar? (digite 'sim') " resposta
+        [ "$resposta" = "sim" ] || erro "cancelado pelo usuário."
+    fi
+    echo "-> docker compose down -v"
+    docker compose down -v
+fi
+
+# ---------------------------------------------------------------------
+# 3. Subir a stack
 # ---------------------------------------------------------------------
 if [ "$SKIP_BUILD" = "1" ]; then
     echo "-> docker compose up -d (sem rebuild)"
@@ -79,7 +116,7 @@ else
 fi
 
 # ---------------------------------------------------------------------
-# 3. Esperar o healthz
+# 4. Esperar o healthz
 # ---------------------------------------------------------------------
 URL="https://$DOMAIN/healthz/"
 if [ "$WAIT" = "1" ]; then
@@ -95,7 +132,7 @@ if [ "$WAIT" = "1" ]; then
 fi
 
 # ---------------------------------------------------------------------
-# 4. Resumo
+# 5. Resumo
 # ---------------------------------------------------------------------
 echo
 echo "== containers =="

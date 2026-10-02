@@ -30,6 +30,8 @@ Gere os segredos:
 
 `python3 -c "import secrets; print('QR_PEPPER=' + secrets.token_urlsafe(32))"`
 
+`python3 -c "import secrets; print('POSTGRES_PASSWORD=' + secrets.token_hex(24))"`
+
 ### A3. Editar o `.env`
 
 Deixe exatamente estes valores (troque só os segredos e a senha):
@@ -52,7 +54,7 @@ Deixe exatamente estes valores (troque só os segredos e a senha):
 
 `POSTGRES_USER=django_user`
 
-`POSTGRES_PASSWORD=SENHA`
+`POSTGRES_PASSWORD=<o valor gerado em A2>`
 
 ### A4. Rodar o deploy
 
@@ -126,6 +128,37 @@ Use `alunos-ifmg-pn-matricula-mapeada.xlsx` (já com a coluna **Turma**
 mapeada para `ADM 1`, `Info 1A`, …). Ele **não** vai no git (dados reais).
 Copie-o para a raiz do projeto na OVM-1 (é o caminho usado pelos comandos e
 pelo script).
+
+## Problemas comuns
+
+### `password authentication failed for user "django_user"`
+
+A conexão chegou ao banco; só a senha não bateu. Causas:
+
+1. **Volume `pgdata` antigo.** O Postgres só aplica `POSTGRES_PASSWORD` na
+   **primeira** inicialização. Se você mudou a senha depois de um `up`
+   anterior, o banco continua com a antiga.
+   - Solução (não há dados a preservar): `./scripts/deploy.sh --reset-db`
+     (ou `docker compose down -v` e subir de novo).
+   - Solução mantendo o banco: `docker exec -it pnae_db psql -U django_user -d postgres -c "ALTER USER django_user WITH PASSWORD 'NOVA_SENHA';"` e depois `docker compose restart app`.
+2. **Senha com caractere especial** (`@ : / # ? % & $`). A `DATABASE_URL` é uma
+   URL e corta a senha no lugar errado. Use senha só com letras/números/-/_
+   (`python3 -c "import secrets; print(secrets.token_hex(24))"`). O `deploy.sh`
+   já recusa senhas fora desse padrão.
+3. **Espaço no fim da linha** do `.env` (ex.: `USE_HTTPS_PROXY=True `). Confira
+   com `cat -A .env` — cada linha deve terminar em `$` sem espaço antes.
+
+> Em produção, a `DATABASE_URL` é **derivada** de `POSTGRES_USER/PASSWORD/DB`
+> pelo `docker-compose.yml`, então não há como divergirem. Basta acertar o
+> `POSTGRES_PASSWORD`.
+
+### Como conferir as credenciais que o banco subiu com
+
+`docker exec pnae_db env | grep '^POSTGRES_'`
+
+E o que a aplicação está usando (sem imprimir a senha):
+
+`docker exec pnae_app python -c "import os,django;os.environ.setdefault('DJANGO_SETTINGS_MODULE','config.settings.prod');django.setup();d=django.conf.settings.DATABASES['default'];print('user=%s host=%s db=%s' % (d['USER'],d['HOST'],d['NAME']))"`
 
 ## Rotina e backup
 

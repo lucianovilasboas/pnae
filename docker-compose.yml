@@ -33,6 +33,9 @@ services:
       APP_SERVER: gunicorn
       APP_PORT: "8601"
       APP_WORKERS: "3"
+      # A URL do banco é derivada de POSTGRES_* (fonte única de verdade),
+      # evitando divergência entre a senha do banco e a da DATABASE_URL.
+      DATABASE_URL: postgres://${POSTGRES_USER:-django_user}:${POSTGRES_PASSWORD:-django_password}@db:5432/${POSTGRES_DB:-django_db}
     env_file:
       - .env
     volumes:
