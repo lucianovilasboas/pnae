@@ -116,3 +116,67 @@ class BulkMenuTests(TestCase):
         )
         self.assertEqual(again["created"], 0)
         self.assertEqual(again["skipped"], 5)
+
+
+class MenuEditDeleteTests(TestCase):
+    def setUp(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.distributions.models import Distribution, DistributionStatus
+
+        self.campus = Campus.objects.create(name="Campus Teste", code="TST")
+        self.operator = User.objects.create_user(
+            email="op@example.org", password="x", name="Operador",
+            campus=self.campus, role=UserRole.OPERATOR,
+        )
+        self.menu = Menu.objects.create(
+            campus=self.campus, service_date=timezone.localdate(),
+            meal_type=MealType.SNACK, description="Lanche", created_by=self.operator,
+        )
+        self.tomorrow = timezone.localdate() + timedelta(days=1)
+        self.now = timezone.now()
+        self.Distribution = Distribution
+        self.DistributionStatus = DistributionStatus
+
+    def test_edita_cardapio(self):
+        from .services import update_menu
+
+        update_menu(
+            menu=self.menu, user=self.operator, service_date=self.menu.service_date,
+            meal_type=MealType.SNACK, description="Novo lanche", notes="obs",
+        )
+        self.menu.refresh_from_db()
+        self.assertEqual(self.menu.description, "Novo lanche")
+
+    def test_editar_conflito_unico(self):
+        from .services import MenuStateError, update_menu
+
+        outro = Menu.objects.create(
+            campus=self.campus, service_date=self.tomorrow,
+            meal_type=MealType.SNACK, description="Outro", created_by=self.operator,
+        )
+        with self.assertRaises(MenuStateError):
+            update_menu(
+                menu=outro, user=self.operator, service_date=self.menu.service_date,
+                meal_type=MealType.SNACK, description="Conflito",
+            )
+
+    def test_nao_exclui_cardapio_vinculado(self):
+        from .services import MenuStateError, delete_menu
+
+        self.Distribution.objects.create(
+            campus=self.campus, menu=self.menu, service_date=self.menu.service_date,
+            meal_type=self.menu.meal_type, planned_start_at=self.now,
+            planned_end_at=self.now, status=self.DistributionStatus.DRAFT,
+        )
+        with self.assertRaises(MenuStateError):
+            delete_menu(menu=self.menu, user=self.operator)
+
+    def test_exclui_cardapio_sem_vinculo(self):
+        from .services import delete_menu
+
+        pk = self.menu.pk
+        delete_menu(menu=self.menu, user=self.operator)
+        self.assertFalse(Menu.objects.filter(pk=pk).exists())

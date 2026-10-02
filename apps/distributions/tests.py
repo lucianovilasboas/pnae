@@ -633,3 +633,70 @@ class BreadcrumbsTests(DistributionFixture):
         self.client.force_login(self.operator)
         response = self.client.get(reverse("distributions:home"))
         self.assertNotContains(response, 'aria-label="Breadcrumb"')
+
+
+class EditDeleteCancelTests(DistributionFixture):
+    def _draft(self):
+        return Distribution.objects.create(
+            campus=self.campus, service_date=timezone.localdate() + timedelta(days=5),
+            meal_type="SNACK", planned_start_at=timezone.now(), planned_end_at=timezone.now(),
+            status=DistributionStatus.DRAFT,
+        )
+
+    def test_edita_rascunho(self):
+        d = self._draft()
+        services.update_distribution(
+            distribution=d, user=self.operator,
+            meal_type="SNACK", estimated_quantity=100,
+        )
+        d.refresh_from_db()
+        self.assertEqual(d.estimated_quantity, 100)
+
+    def test_nao_edita_distribuicao_aberta(self):
+        with self.assertRaises(services.DistributionStateError):
+            services.update_distribution(
+                distribution=self.distribution, user=self.operator, estimated_quantity=5
+            )
+
+    def test_exclui_rascunho_sem_entregas(self):
+        d = self._draft()
+        pk = d.pk
+        services.delete_distribution(distribution=d, user=self.operator)
+        self.assertFalse(Distribution.objects.filter(pk=pk).exists())
+
+    def test_nao_exclui_fora_de_rascunho(self):
+        with self.assertRaises(services.DistributionStateError):
+            services.delete_distribution(distribution=self.distribution, user=self.operator)
+
+    def test_nao_exclui_rascunho_com_entregas(self):
+        d = self._draft()
+        Delivery.objects.create(
+            distribution=d, student=self.student, delivery_type=DeliveryType.REGULAR,
+            recorded_by=self.operator,
+        )
+        with self.assertRaises(services.DistributionStateError):
+            services.delete_distribution(distribution=d, user=self.operator)
+
+    def test_cancela_aberta_e_nao_aceita_scan(self):
+        services.cancel_distribution(
+            distribution=self.distribution, user=self.operator, reason="Sem lanche"
+        )
+        self.distribution.refresh_from_db()
+        self.assertEqual(self.distribution.status, DistributionStatus.CANCELED)
+        result = services.record_scan(
+            distribution=self.distribution, token=self.token, user=self.operator
+        )
+        self.assertEqual(result.result, "DISTRIBUTION_CLOSED")
+
+    def test_cancelar_exige_motivo(self):
+        with self.assertRaises(services.DistributionStateError):
+            services.cancel_distribution(
+                distribution=self.distribution, user=self.operator, reason="  "
+            )
+
+    def test_pagina_editar_abre(self):
+        d = self._draft()
+        self.client.force_login(self.operator)
+        response = self.client.get(reverse("distributions:edit", args=[d.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Editar distribuição")

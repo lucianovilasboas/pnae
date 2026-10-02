@@ -189,3 +189,26 @@ mesmo estudante na mesma distribuição — comportamento desejado.
 0006 audit: AuditEvent
 ```
 A migration `0005` inclui `RunSQL` das constraints parciais, com `reverse_sql`.
+
+## 8. Operações administrativas (editar/excluir/cancelar)
+
+Regras implementadas nas telas de Distribuições e Cardápios:
+
+- **Distribuição**
+  - **Editar**: apenas em `RASCUNHO` (data, refeição, cardápio, horários,
+    quantidade prevista). Auditado (`distribution.updated`).
+  - **Excluir**: apenas em `RASCUNHO` e **sem entregas**. Auditado
+    (`distribution.deleted`). Rascunhos com entregas ou fora de rascunho são
+    bloqueados.
+  - **Cancelar**: `RASCUNHO`/`ABERTA → CANCELADA`, com **motivo** (guardado no
+    `AuditEvent`). Cancelada não aceita leitura. Auditado
+    (`distribution.canceled`).
+  - **Encerrada**: só **reabre no mesmo dia** (`distribution.reopened`).
+- **Cardápio**
+  - **Editar**: respeita o único `(campus, service_date, meal_type)`;
+    auditado (`menu.updated`).
+  - **Excluir**: bloqueado se houver **distribuição vinculada**; auditado
+    (`menu.deleted`).
+
+> Entregas e importações permanecem **sem exclusão física** (RN-09); as
+> exclusões acima são de entidades administrativas e sempre geram auditoria.

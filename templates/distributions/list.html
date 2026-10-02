@@ -100,6 +100,15 @@
               <input type="hidden" name="id" value="{{ distribution.pk }}">
               <button class="rounded-full bg-emerald-700 px-3 py-1.5 text-white">Abrir</button>
             </form>
+            <a href="{% url 'distributions:edit' distribution.pk %}"
+               class="rounded-full border border-slate-300 px-3 py-1.5">Editar</a>
+            <form method="post" class="inline">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="id" value="{{ distribution.pk }}">
+              <button class="rounded-full border border-red-300 px-3 py-1.5 text-red-700"
+                      onclick="return confirm('Excluir esta distribuição?');">Excluir</button>
+            </form>
           {% else %}
             {% if distribution.status == 'OPEN' %}
               <a href="{% url 'distributions:operation' distribution.pk %}"
@@ -117,6 +126,14 @@
                 <input type="hidden" name="action" value="close">
                 <input type="hidden" name="id" value="{{ distribution.pk }}">
                 <button class="rounded-full border border-slate-300 px-3 py-1.5">Encerrar</button>
+              </form>
+              <form method="post" class="inline"
+                    onsubmit="this.reason.value = prompt('Motivo do cancelamento:') || ''; return this.reason.value.trim().length > 0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="cancel">
+                <input type="hidden" name="id" value="{{ distribution.pk }}">
+                <input type="hidden" name="reason" value="">
+                <button class="rounded-full border border-amber-300 px-3 py-1.5 text-amber-700">Cancelar</button>
               </form>
             {% endif %}
             {% if distribution.status == 'CLOSED' and distribution.can_reopen %}
@@ -173,6 +190,15 @@
                     <input type="hidden" name="id" value="{{ distribution.pk }}">
                     <button class="whitespace-nowrap rounded bg-emerald-700 px-3 py-1 text-white">Abrir</button>
                   </form>
+                  <a href="{% url 'distributions:edit' distribution.pk %}"
+                     class="whitespace-nowrap rounded border border-slate-300 px-3 py-1">Editar</a>
+                  <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" value="{{ distribution.pk }}">
+                    <button class="whitespace-nowrap rounded border border-red-300 px-3 py-1 text-red-700"
+                            onclick="return confirm('Excluir esta distribuição?');">Excluir</button>
+                  </form>
                 {% else %}
                   {% if distribution.status == 'OPEN' %}
                     <a href="{% url 'distributions:operation' distribution.pk %}"
@@ -190,6 +216,14 @@
                       <input type="hidden" name="action" value="close">
                       <input type="hidden" name="id" value="{{ distribution.pk }}">
                       <button class="whitespace-nowrap rounded border border-slate-300 px-3 py-1">Encerrar</button>
+                    </form>
+                    <form method="post" class="inline"
+                          onsubmit="this.reason.value = prompt('Motivo do cancelamento:') || ''; return this.reason.value.trim().length > 0;">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="cancel">
+                      <input type="hidden" name="id" value="{{ distribution.pk }}">
+                      <input type="hidden" name="reason" value="">
+                      <button class="whitespace-nowrap rounded border border-amber-300 px-3 py-1 text-amber-700">Cancelar</button>
                     </form>
                   {% endif %}
                   {% if distribution.status == 'CLOSED' and distribution.can_reopen %}

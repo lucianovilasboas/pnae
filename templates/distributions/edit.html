@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Editar distribuição — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4 text-2xl font-bold">Editar distribuição (rascunho)</h1>
+
+  <form method="post" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+    {% csrf_token %}
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm">Data
+        <input type="date" name="service_date" required
+               value="{{ distribution.service_date|date:'Y-m-d' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Refeição
+        <select name="meal_type" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          {% for value, label in meal_types %}
+            <option value="{{ value }}" {% if distribution.meal_type == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="text-sm sm:col-span-2">Cardápio (opcional)
+        <select name="menu" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          <option value="">Sem cardápio vinculado</option>
+          {% for menu in menus %}
+            <option value="{{ menu.pk }}" {% if distribution.menu_id == menu.pk %}selected{% endif %}>
+              {{ menu.service_date }} — {{ menu.get_meal_type_display }}: {{ menu.description|truncatechars:40 }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="text-sm">Início previsto
+        <input type="datetime-local" name="planned_start_at" required
+               value="{{ distribution.planned_start_at|date:'Y-m-d\TH:i' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Fim previsto
+        <input type="datetime-local" name="planned_end_at" required
+               value="{{ distribution.planned_end_at|date:'Y-m-d\TH:i' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm sm:col-span-2">Quantidade prevista (opcional)
+        <input type="number" name="estimated_quantity" min="0"
+               value="{{ distribution.estimated_quantity|default_if_none:'' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button type="submit" class="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">
+        Salvar
+      </button>
+      <a href="{% url 'distributions:list' %}" class="rounded-full border border-slate-300 px-4 py-2 text-sm">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

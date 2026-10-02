@@ -452,3 +452,66 @@ def create_distributions_bulk(
         },
     )
     return {"created": len(to_create), "skipped": len(existing), "dates": to_create}
+
+
+# ---------------------------------------------------------------------------
+# Edição, exclusão e cancelamento
+# ---------------------------------------------------------------------------
+def update_distribution(*, distribution, user, **fields):
+    """Edita uma distribuição em rascunho. Campos permitidos vêm da view."""
+    if distribution.status != DistributionStatus.DRAFT:
+        raise DistributionStateError("Só é possível editar uma distribuição em rascunho.")
+    for key, value in fields.items():
+        setattr(distribution, key, value)
+    distribution.save()
+    record_event(
+        action="distribution.updated",
+        entity_type="Distribution",
+        entity_id=distribution.pk,
+        actor=user,
+        campus=distribution.campus,
+        metadata={"fields": sorted(fields.keys())},
+    )
+    return distribution
+
+
+def delete_distribution(*, distribution, user):
+    """Exclui uma distribuição em rascunho (sem entregas)."""
+    if distribution.status != DistributionStatus.DRAFT:
+        raise DistributionStateError("Só é possível excluir uma distribuição em rascunho.")
+    if distribution.deliveries.exists():
+        raise DistributionStateError(
+            "Esta distribuição já tem entregas e não pode ser excluída."
+        )
+    pk = distribution.pk
+    campus = distribution.campus
+    distribution.delete()
+    record_event(
+        action="distribution.deleted",
+        entity_type="Distribution",
+        entity_id=pk,
+        actor=user,
+        campus=campus,
+        metadata={},
+    )
+
+
+def cancel_distribution(*, distribution, user, reason):
+    """Cancela uma distribuição em rascunho ou aberta (motivo vai à auditoria)."""
+    if distribution.status not in {DistributionStatus.DRAFT, DistributionStatus.OPEN}:
+        raise DistributionStateError(
+            "Só é possível cancelar uma distribuição em rascunho ou aberta."
+        )
+    if not reason or not reason.strip():
+        raise DistributionStateError("Motivo obrigatório para cancelar.")
+    distribution.status = DistributionStatus.CANCELED
+    distribution.save(update_fields=["status", "updated_at"])
+    record_event(
+        action="distribution.canceled",
+        entity_type="Distribution",
+        entity_id=distribution.pk,
+        actor=user,
+        campus=distribution.campus,
+        metadata={"reason": reason.strip()},
+    )
+    return distribution

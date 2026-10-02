@@ -74,6 +74,10 @@ def distribution_list(request):
             _handle_create(request, campus)
         elif action in {"open", "close", "reopen"}:
             _handle_transition(request, action, campus)
+        elif action == "delete":
+            _handle_delete(request, campus)
+        elif action == "cancel":
+            _handle_cancel(request, campus)
         return redirect("distributions:list")
 
     # Filtros e paginação.
@@ -186,6 +190,90 @@ def _distribution_crumbs(distribution, current_label=None):
     else:
         crumbs[-1].pop("url")
     return crumbs
+
+
+def _get_scoped_distribution(request, campus):
+    distribution = get_object_or_404(Distribution, pk=request.POST.get("id"))
+    if campus is not None and distribution.campus_id != campus.pk and not request.user.is_superuser:
+        return None
+    return distribution
+
+
+def _handle_delete(request, campus):
+    distribution = _get_scoped_distribution(request, campus)
+    if distribution is None:
+        messages.error(request, "Distribuição de outro campus.")
+        return
+    try:
+        services.delete_distribution(distribution=distribution, user=request.user)
+        messages.success(request, "Distribuição excluída.")
+    except DistributionStateError as exc:
+        messages.error(request, str(exc))
+
+
+def _handle_cancel(request, campus):
+    distribution = _get_scoped_distribution(request, campus)
+    if distribution is None:
+        messages.error(request, "Distribuição de outro campus.")
+        return
+    try:
+        services.cancel_distribution(
+            distribution=distribution,
+            user=request.user,
+            reason=request.POST.get("reason", ""),
+        )
+        messages.success(request, "Distribuição cancelada.")
+    except DistributionStateError as exc:
+        messages.error(request, str(exc))
+
+
+@login_required
+def distribution_edit(request, pk):
+    denied = _require_operator(request)
+    if denied:
+        return denied
+
+    _campus, queryset = _scoped_distributions(request)
+    distribution = get_object_or_404(queryset, pk=pk)
+    if distribution.status != DistributionStatus.DRAFT:
+        messages.error(request, "Só é possível editar uma distribuição em rascunho.")
+        return redirect("distributions:list")
+
+    if request.method == "POST":
+        service_date = parse_date(request.POST.get("service_date", "") or "")
+        start = _aware(parse_datetime(request.POST.get("planned_start_at", "") or ""))
+        end = _aware(parse_datetime(request.POST.get("planned_end_at", "") or ""))
+        meal_type = request.POST.get("meal_type") or MealType.SNACK
+        menu_id = request.POST.get("menu")
+        menu = Menu.objects.filter(pk=menu_id, campus=distribution.campus).first() if menu_id else None
+        estimated = request.POST.get("estimated_quantity") or None
+        if not (service_date and start and end and meal_type and end > start):
+            messages.error(request, "Preencha os campos e garanta que o fim seja após o início.")
+        else:
+            services.update_distribution(
+                distribution=distribution,
+                user=request.user,
+                service_date=service_date,
+                meal_type=meal_type,
+                menu=menu,
+                planned_start_at=start,
+                planned_end_at=end,
+                estimated_quantity=estimated,
+            )
+            messages.success(request, "Distribuição atualizada.")
+            return redirect("distributions:list")
+
+    menus = Menu.objects.filter(campus=distribution.campus).order_by("-service_date")[:30]
+    return render(
+        request,
+        "distributions/edit.html",
+        {
+            "distribution": distribution,
+            "menus": menus,
+            "meal_types": MealType.choices,
+            "breadcrumbs": _distribution_crumbs(distribution, "Editar"),
+        },
+    )
 
 
 @login_required

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Editar cardápio — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4 text-2xl font-bold">Editar cardápio</h1>
+
+  <form method="post" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+    {% csrf_token %}
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm">Data
+        <input type="date" name="service_date" required
+               value="{{ menu.service_date|date:'Y-m-d' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Refeição
+        <select name="meal_type" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          {% for value, label in meal_types %}
+            <option value="{{ value }}" {% if menu.meal_type == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="text-sm sm:col-span-2">Descrição
+        <textarea name="description" rows="2" required
+                  class="mt-1 w-full rounded-lg border border-slate-300 p-2">{{ menu.description }}</textarea>
+      </label>
+      <label class="text-sm sm:col-span-2">Observações (opcional)
+        <input type="text" name="notes" value="{{ menu.notes }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button type="submit" class="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">
+        Salvar
+      </button>
+      <a href="{% url 'menus:list' %}" class="rounded-full border border-slate-300 px-4 py-2 text-sm">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}
