@@ -86,3 +86,33 @@ class DistributionMenuTests(TestCase):
         distribution = Distribution.objects.get()
         self.assertEqual(distribution.menu, self.menu)
         self.assertEqual(distribution.meal_type, MealType.SNACK)
+
+
+class BulkMenuTests(TestCase):
+    def setUp(self):
+        self.campus = Campus.objects.create(name="Campus Teste", code="TST")
+        self.operator = User.objects.create_user(
+            email="op@example.org", password="x", name="Operador",
+            campus=self.campus, role=UserRole.OPERATOR,
+        )
+
+    def test_bulk_menus_cria_e_pula(self):
+        from datetime import date
+
+        from .services import create_menus_bulk
+
+        result = create_menus_bulk(
+            campus=self.campus, user=self.operator,
+            start_date=date(2026, 10, 1), end_date=date(2026, 10, 7),
+            weekdays={0, 1, 2, 3, 4}, meal_type="SNACK", description="Lanche X",
+        )
+        self.assertEqual(result["created"], 5)  # Seg–Sex
+        self.assertEqual(Menu.objects.filter(description="Lanche X").count(), 5)
+
+        again = create_menus_bulk(
+            campus=self.campus, user=self.operator,
+            start_date=date(2026, 10, 1), end_date=date(2026, 10, 7),
+            weekdays={0, 1, 2, 3, 4}, meal_type="SNACK", description="Lanche X",
+        )
+        self.assertEqual(again["created"], 0)
+        self.assertEqual(again["skipped"], 5)

@@ -2,9 +2,11 @@
 
 import csv
 import io
+from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -13,7 +15,9 @@ from django.utils.dateparse import parse_date, parse_datetime
 from apps.accounts.decorators import can_reverse, is_operator
 from apps.campus.models import ClassGroup
 from apps.campus.selectors import resolve_campus
+from apps.dates import WEEKDAY_LABELS, parse_weekdays
 from apps.menus.models import MealType, Menu
+from apps.menus.services import create_menus_bulk, plan_menus_bulk
 
 from . import services
 from .models import Delivery, Distribution, DistributionStatus
@@ -72,16 +76,47 @@ def distribution_list(request):
             _handle_transition(request, action, campus)
         return redirect("distributions:list")
 
+    # Filtros e paginação.
+    de = parse_date(request.GET.get("de", "") or "")
+    ate = parse_date(request.GET.get("ate", "") or "")
+    status = request.GET.get("status", "").strip()
+    escopo = request.GET.get("escopo", "futuras")
+
+    filtered = queryset
+    if de:
+        filtered = filtered.filter(service_date__gte=de)
+    if ate:
+        filtered = filtered.filter(service_date__lte=ate)
+    if status:
+        filtered = filtered.filter(status=status)
+    if escopo == "futuras" and not de and not ate:
+        filtered = filtered.filter(service_date__gte=timezone.localdate())
+    filtered = filtered.order_by("service_date", "planned_start_at")
+
+    paginator = Paginator(filtered, 20)
+    page = paginator.get_page(request.GET.get("page"))
+    query = request.GET.copy()
+    query.pop("page", None)
+
     return render(
         request,
         "distributions/list.html",
         {
-            "distributions": queryset.order_by("-service_date", "-id")[:50],
+            "distributions": page.object_list,
+            "page": page,
+            "querystring": query.urlencode(),
             "campus": campus,
             "menus": Menu.objects.filter(campus=campus).order_by("-service_date")[:30]
             if campus
             else Menu.objects.none(),
             "meal_types": MealType.choices,
+            "status_choices": DistributionStatus.choices,
+            "filters": {
+                "de": request.GET.get("de", ""),
+                "ate": request.GET.get("ate", ""),
+                "status": status,
+                "escopo": escopo,
+            },
         },
     )
 
@@ -244,3 +279,112 @@ def report_csv(request, pk):
         content_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="relatorio-{distribution.pk}.csv"'},
     )
+
+
+def _parse_time(value):
+    try:
+        return datetime.strptime(value, "%H:%M").time()
+    except (TypeError, ValueError):
+        return None
+
+
+@login_required
+def batch(request):
+    """Criação em lote de distribuições e cardápios (período × dias da semana)."""
+    denied = _require_operator(request)
+    if denied:
+        return denied
+
+    campus = resolve_campus(request.user, request)
+    context = {
+        "campus": campus,
+        "meal_types": MealType.choices,
+        "weekdays": list(enumerate(WEEKDAY_LABELS)),
+        "default_weekdays": [0, 1, 2, 3, 4],
+        "selected_weekdays": {0, 1, 2, 3, 4},
+        "form": {},
+        "preview": None,
+    }
+
+    if request.method == "POST":
+        kind = request.POST.get("kind")  # "distributions" | "menus"
+        action = request.POST.get("action")  # "preview" | "create"
+        start = parse_date(request.POST.get("de", "") or "")
+        end = parse_date(request.POST.get("ate", "") or "")
+        weekdays = parse_weekdays(request.POST.getlist("weekdays"))
+        meal_type = request.POST.get("meal_type") or MealType.SNACK
+
+        context["form"] = {
+            "kind": kind,
+            "action": action,
+            "de": request.POST.get("de", ""),
+            "ate": request.POST.get("ate", ""),
+            "weekdays": [str(d) for d in sorted(weekdays)],
+            "meal_type": meal_type,
+            "inicio": request.POST.get("inicio", ""),
+            "fim": request.POST.get("fim", ""),
+            "description": request.POST.get("description", ""),
+            "notes": request.POST.get("notes", ""),
+            "estimated_quantity": request.POST.get("estimated_quantity", ""),
+        }
+        context["selected_weekdays"] = weekdays or {0, 1, 2, 3, 4}
+
+        if campus is None:
+            messages.error(request, "Campus não definido.")
+        elif start is None or end is None or end < start:
+            messages.error(request, "Informe um período válido (data inicial ≤ data final).")
+        elif not weekdays:
+            messages.error(request, "Selecione pelo menos um dia da semana.")
+        elif kind == "menus":
+            description = (request.POST.get("description") or "").strip()
+            if not description:
+                messages.error(request, "Informe a descrição do cardápio.")
+            else:
+                to_create, existing = plan_menus_bulk(
+                    campus=campus, start_date=start, end_date=end,
+                    weekdays=weekdays, meal_type=meal_type,
+                )
+                if action == "create":
+                    result = create_menus_bulk(
+                        campus=campus, user=request.user, start_date=start, end_date=end,
+                        weekdays=weekdays, meal_type=meal_type, description=description,
+                        notes=(request.POST.get("notes") or "").strip(),
+                    )
+                    messages.success(
+                        request,
+                        f"Cardápios criados: {result['created']} (pulados {result['skipped']}).",
+                    )
+                    return redirect("menus:list")
+                context["preview"] = {
+                    "kind": "menus", "to_create": to_create, "existing": existing,
+                    "meal_type": meal_type, "description": description,
+                }
+        else:  # distribuições
+            start_time = _parse_time(request.POST.get("inicio", ""))
+            end_time = _parse_time(request.POST.get("fim", ""))
+            estimated = request.POST.get("estimated_quantity") or None
+            if start_time is None or end_time is None or start_time >= end_time:
+                messages.error(request, "Informe horários válidos (início antes do fim).")
+            else:
+                to_create, existing = services.plan_distributions_bulk(
+                    campus=campus, start_date=start, end_date=end,
+                    weekdays=weekdays, meal_type=meal_type,
+                )
+                if action == "create":
+                    result = services.create_distributions_bulk(
+                        campus=campus, user=request.user, start_date=start, end_date=end,
+                        weekdays=weekdays, meal_type=meal_type, start_time=start_time,
+                        end_time=end_time, estimated_quantity=estimated,
+                    )
+                    messages.success(
+                        request,
+                        f"Distribuições criadas: {result['created']} "
+                        f"(puladas {result['skipped']}).",
+                    )
+                    return redirect("distributions:list")
+                context["preview"] = {
+                    "kind": "distributions", "to_create": to_create, "existing": existing,
+                    "meal_type": meal_type, "start_time": start_time, "end_time": end_time,
+                }
+
+    return render(request, "distributions/batch.html", context)

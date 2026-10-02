@@ -528,3 +528,56 @@ class PwaTests(DistributionFixture):
         self.assertIn('rel="manifest"', body)
         self.assertIn("apple-touch-icon", body)
         self.assertIn("serviceWorker", body)
+
+
+class BulkDistributionTests(DistributionFixture):
+    def test_bulk_cria_pula_e_vincula_cardapio(self):
+        from datetime import date, time
+
+        from apps.menus.models import MealType, Menu
+        from apps.distributions import services
+
+        Menu.objects.create(
+            campus=self.campus, service_date=date(2026, 10, 1),
+            meal_type=MealType.SNACK, description="Lanche", created_by=self.operator,
+        )
+        # já existe uma em 02/10 (deve ser pulada)
+        Distribution.objects.create(
+            campus=self.campus, service_date=date(2026, 10, 2), meal_type="SNACK",
+            planned_start_at=timezone.now(), planned_end_at=timezone.now(),
+            status=DistributionStatus.DRAFT,
+        )
+        result = services.create_distributions_bulk(
+            campus=self.campus, user=self.operator,
+            start_date=date(2026, 10, 1), end_date=date(2026, 10, 7),
+            weekdays={0, 1, 2, 3, 4}, meal_type="SNACK",
+            start_time=time(15, 0), end_time=time(16, 0),
+        )
+        # Seg–Sex em 01..07/10/2026 => 5 dias; 1 já existia => 4 criadas
+        self.assertEqual(result["created"], 4)
+        self.assertEqual(result["skipped"], 1)
+        created = Distribution.objects.get(
+            campus=self.campus, service_date=date(2026, 10, 1), meal_type="SNACK"
+        )
+        self.assertEqual(created.menu.description, "Lanche")  # cardápio do dia vinculado
+        self.assertTrue(created.auto_open)
+
+    def test_pagina_lote_e_preview(self):
+        from django.urls import reverse
+
+        self.client.force_login(self.operator)
+        page = self.client.get(reverse("distributions:batch"))
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Criar em lote")
+
+        preview = self.client.post(
+            reverse("distributions:batch"),
+            {
+                "kind": "distributions", "action": "preview",
+                "de": "2026-10-01", "ate": "2026-10-07",
+                "weekdays": ["0", "1", "2", "3", "4"],
+                "meal_type": "SNACK", "inicio": "15:00", "fim": "16:00",
+            },
+        )
+        self.assertEqual(preview.status_code, 200)
+        self.assertContains(preview, "a criar")

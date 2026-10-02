@@ -6,11 +6,14 @@ aqui apenas interpretamos o `IntegrityError`. Ver docs/05-testes.md.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.audit.services import record_event
+from apps.dates import MAX_BULK_ROWS, iter_dates
+from apps.menus.models import Menu
 from apps.students.models import Student
 from apps.students.tokens import hash_token
 
@@ -338,3 +341,77 @@ def report_rows(distribution):
             }
         )
     return rows
+
+
+# ---------------------------------------------------------------------------
+# Criação em lote (período × dias da semana)
+# ---------------------------------------------------------------------------
+def plan_distributions_bulk(*, campus, start_date, end_date, weekdays, meal_type):
+    """Datas a criar e datas já existentes, sem gravar nada."""
+    to_create, existing = [], []
+    for day in iter_dates(start_date, end_date, weekdays):
+        if Distribution.objects.filter(
+            campus=campus, service_date=day, meal_type=meal_type
+        ).exists():
+            existing.append(day)
+        else:
+            to_create.append(day)
+        if len(to_create) + len(existing) >= MAX_BULK_ROWS:
+            break
+    return to_create, existing
+
+
+@transaction.atomic
+def create_distributions_bulk(
+    *,
+    campus,
+    user,
+    start_date,
+    end_date,
+    weekdays,
+    meal_type,
+    start_time,
+    end_time,
+    estimated_quantity=None,
+    auto_open=True,
+):
+    """Cria rascunhos para os dias do período; vincula o cardápio do dia se houver."""
+    to_create, existing = plan_distributions_bulk(
+        campus=campus,
+        start_date=start_date,
+        end_date=end_date,
+        weekdays=weekdays,
+        meal_type=meal_type,
+    )
+    tz = timezone.get_current_timezone()
+    for day in to_create:
+        day_menu = Menu.objects.filter(
+            campus=campus, service_date=day, meal_type=meal_type
+        ).first()
+        Distribution.objects.create(
+            campus=campus,
+            menu=day_menu,
+            service_date=day,
+            meal_type=meal_type,
+            planned_start_at=timezone.make_aware(datetime.combine(day, start_time), tz),
+            planned_end_at=timezone.make_aware(datetime.combine(day, end_time), tz),
+            estimated_quantity=estimated_quantity,
+            status=DistributionStatus.DRAFT,
+            auto_open=auto_open,
+        )
+
+    record_event(
+        action="distribution.bulk_created",
+        entity_type="Campus",
+        entity_id=campus.pk,
+        actor=user,
+        campus=campus,
+        metadata={
+            "created": len(to_create),
+            "skipped": len(existing),
+            "start": str(start_date),
+            "end": str(end_date),
+            "mealType": meal_type,
+        },
+    )
+    return {"created": len(to_create), "skipped": len(existing), "dates": to_create}

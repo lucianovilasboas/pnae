@@ -2,7 +2,13 @@
 {% block title %}Distribuições — IFMG Alimenta{% endblock %}
 
 {% block content %}
-  <h1 class="mb-4 text-2xl font-bold">Distribuições</h1>
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+    <h1 class="text-2xl font-bold">Distribuições</h1>
+    <a href="{% url 'distributions:batch' %}"
+       class="rounded-full bg-slate-800 px-4 py-1.5 text-sm text-white hover:bg-slate-700">
+      Criar em lote
+    </a>
+  </div>
 
   <form method="post" class="mb-6 rounded-lg bg-white p-4 shadow sm:p-5">
     {% csrf_token %}
@@ -41,6 +47,33 @@
     <a href="{% url 'menus:list' %}" class="mt-2 block text-sm text-emerald-700 hover:underline sm:mt-0 sm:ml-3 sm:inline">
       Cadastrar cardápio
     </a>
+  </form>
+
+  <form method="get" class="mb-4 grid gap-2 rounded-lg bg-white p-3 shadow sm:grid-cols-5">
+    <label class="text-xs">De
+      <input type="date" name="de" value="{{ filters.de }}" class="mt-1 w-full rounded border border-slate-300 p-2 text-sm">
+    </label>
+    <label class="text-xs">Até
+      <input type="date" name="ate" value="{{ filters.ate }}" class="mt-1 w-full rounded border border-slate-300 p-2 text-sm">
+    </label>
+    <label class="text-xs">Situação
+      <select name="status" class="mt-1 w-full rounded border border-slate-300 p-2 text-sm">
+        <option value="">Todas</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="text-xs">Escopo
+      <select name="escopo" class="mt-1 w-full rounded border border-slate-300 p-2 text-sm">
+        <option value="futuras" {% if filters.escopo == 'futuras' %}selected{% endif %}>A partir de hoje</option>
+        <option value="todas" {% if filters.escopo == 'todas' %}selected{% endif %}>Todas</option>
+      </select>
+    </label>
+    <div class="flex items-end gap-2">
+      <button class="rounded-full bg-slate-700 px-4 py-2 text-sm text-white">Filtrar</button>
+      <a href="{% url 'distributions:list' %}" class="text-xs text-slate-500 hover:underline">Limpar</a>
+    </div>
   </form>
 
   {# Mobile: cards #}
@@ -160,4 +193,6 @@
       </tbody>
     </table>
   </div>
+
+  {% include "_pagination.html" %}
 {% endblock %}

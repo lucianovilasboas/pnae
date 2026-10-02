@@ -48,7 +48,10 @@ class Distribution(models.Model):
         choices=DistributionStatus.choices,
         default=DistributionStatus.DRAFT,
     )
-    estimated_quantity = models.PositiveIntegerField("quantidade prevista", null=True, blank=True)
+    estimated_quantity = models.PositiveIntegerField("quantidade prevista", null=True, blank=True)  # noqa: E501
+    # Gerada em lote: reservado para abrir/encerrar automaticamente no futuro
+    # (hoje a abertura/encerramento é sempre manual).
+    auto_open = models.BooleanField("gerada em lote", default=False)
 
     extras_enabled_at = models.DateTimeField("excedentes liberados em", null=True, blank=True)
     extras_enabled_by = models.ForeignKey(

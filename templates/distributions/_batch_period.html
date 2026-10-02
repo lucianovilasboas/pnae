@@ -1,0 +1,89 @@
+{% comment %}
+Formulário de criação em lote (reutilizado para Distribuições e Cardápios).
+Recebe `kind` ("distributions"|"menus") e `title`.
+{% endcomment %}
+<section class="mb-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+  <h2 class="mb-3 text-lg font-semibold">{{ title }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="kind" value="{{ kind }}">
+
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm">De
+        <input type="date" name="de" required
+               value="{% if form.kind == kind %}{{ form.de }}{% endif %}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Até
+        <input type="date" name="ate" required
+               value="{% if form.kind == kind %}{{ form.ate }}{% endif %}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+
+      <div class="sm:col-span-2">
+        <span class="text-sm">Dias da semana</span>
+        <div class="mt-1 flex flex-wrap gap-2 text-sm">
+          {% for i, label in weekdays %}
+            <label class="flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1">
+              <input type="checkbox" name="weekdays" value="{{ i }}"
+                     {% if i in selected_weekdays %}checked{% endif %}>
+              {{ label }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <label class="text-sm">Refeição
+        <select name="meal_type" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          {% for value, label in meal_types %}
+            <option value="{{ value }}"
+              {% if form.kind == kind and form.meal_type == value %}selected{% elif form.kind != kind and value == 'SNACK' %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      {% if kind == "distributions" %}
+        <div class="grid grid-cols-2 gap-3 sm:col-span-2">
+          <label class="text-sm">Início
+            <input type="time" name="inicio" required
+                   value="{% if form.kind == kind %}{{ form.inicio }}{% endif %}"
+                   class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          </label>
+          <label class="text-sm">Fim
+            <input type="time" name="fim" required
+                   value="{% if form.kind == kind %}{{ form.fim }}{% endif %}"
+                   class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          </label>
+        </div>
+        <label class="text-sm sm:col-span-2">Quantidade prevista (opcional)
+          <input type="number" name="estimated_quantity" min="0"
+                 value="{% if form.kind == kind %}{{ form.estimated_quantity }}{% endif %}"
+                 class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+        </label>
+      {% else %}
+        <label class="text-sm sm:col-span-2">Descrição (a mesma para todas as datas)
+          <textarea name="description" rows="2" required
+                    class="mt-1 w-full rounded-lg border border-slate-300 p-2"
+                    placeholder="Ex.: Pão com mortadela, suco de laranja, fruta">{% if form.kind == kind %}{{ form.description }}{% endif %}</textarea>
+        </label>
+        <label class="text-sm sm:col-span-2">Observações (opcional)
+          <input type="text" name="notes"
+                 value="{% if form.kind == kind %}{{ form.notes }}{% endif %}"
+                 class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+        </label>
+      {% endif %}
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button type="submit" name="action" value="preview"
+              class="rounded-full border border-slate-300 px-4 py-2 text-sm">Pré-visualizar</button>
+      <button type="submit" name="action" value="create"
+              class="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+              onclick="return confirm('Criar os registros do período selecionado?');">
+        Criar
+      </button>
+    </div>
+  </form>
+</section>

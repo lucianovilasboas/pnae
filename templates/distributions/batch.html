@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Criar em lote — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+    <h1 class="text-2xl font-bold">Criar em lote</h1>
+    <a href="{% url 'distributions:list' %}" class="rounded-full border border-slate-300 px-3 py-1.5 text-sm">Voltar</a>
+  </div>
+
+  {% if not campus %}
+    <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+      Campus não definido para o seu usuário.
+    </div>
+  {% endif %}
+
+  {% if preview %}
+    <div class="mb-4 rounded-xl border border-sky-300 bg-sky-50 p-4 text-sm text-sky-900">
+      <strong>{{ preview.to_create|length }}</strong> a criar e
+      <strong>{{ preview.existing|length }}</strong> já existente(s) (serão puladas).
+      {% if preview.to_create %}
+        <div class="mt-2 max-h-40 overflow-auto text-xs">
+          {% for d in preview.to_create %}<span class="mr-2">{{ d|date:"d/m/Y" }}</span>{% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% include "distributions/_batch_period.html" with kind="distributions" title="Distribuições" %}
+
+  {% include "distributions/_batch_period.html" with kind="menus" title="Cardápios" %}
+{% endblock %}

@@ -2,6 +2,7 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_date
@@ -51,9 +52,30 @@ def menu_list(request):
 
     queryset = Menu.objects.none()
     if campus is not None:
-        queryset = Menu.objects.filter(campus=campus).order_by("-service_date", "meal_type")[:50]
+        queryset = Menu.objects.filter(campus=campus)
+
+    de = parse_date(request.GET.get("de", "") or "")
+    ate = parse_date(request.GET.get("ate", "") or "")
+    if de:
+        queryset = queryset.filter(service_date__gte=de)
+    if ate:
+        queryset = queryset.filter(service_date__lte=ate)
+    queryset = queryset.order_by("-service_date", "meal_type")
+
+    paginator = Paginator(queryset, 20)
+    page = paginator.get_page(request.GET.get("page"))
+    query = request.GET.copy()
+    query.pop("page", None)
+
     return render(
         request,
         "menus/list.html",
-        {"menus": queryset, "campus": campus, "meal_types": MealType.choices},
+        {
+            "menus": page.object_list,
+            "page": page,
+            "querystring": query.urlencode(),
+            "campus": campus,
+            "meal_types": MealType.choices,
+            "filters": {"de": request.GET.get("de", ""), "ate": request.GET.get("ate", "")},
+        },
     )

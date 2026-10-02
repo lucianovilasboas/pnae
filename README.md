@@ -32,6 +32,7 @@ códigos de barras 1D via ZXing; a câmera requer HTTPS).
 |---|---|
 | Painel | `/` |
 | Distribuições (criar/abrir/encerrar) | `/distribuicoes/` |
+| Criar em lote (distribuições e cardápios) | `/lote/` |
 | Operação de entrega | `/distribuicoes/<id>/operar/` |
 | Entregas (estorno) | `/distribuicoes/<id>/entregas/` |
 | Pendentes | `/distribuicoes/<id>/pendentes/` |

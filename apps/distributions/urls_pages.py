@@ -7,6 +7,7 @@ app_name = "distributions"
 urlpatterns = [
     path("", views.home, name="home"),
     path("distribuicoes/", views.distribution_list, name="list"),
+    path("lote/", views.batch, name="batch"),
     path("distribuicoes/<int:pk>/operar/", views.operation, name="operation"),
     path("distribuicoes/<int:pk>/pendentes/", views.pending, name="pending"),
     path("distribuicoes/<int:pk>/entregas/", views.deliveries, name="deliveries"),

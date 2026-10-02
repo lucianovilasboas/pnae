@@ -33,6 +33,12 @@ class Menu(models.Model):
                 name="idx_menu_campus_date_type",
             )
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["campus", "service_date", "meal_type"],
+                name="uniq_menu_campus_date_type",
+            )
+        ]
 
     def __str__(self):
         return f"{self.service_date} — {self.get_meal_type_display()}"
