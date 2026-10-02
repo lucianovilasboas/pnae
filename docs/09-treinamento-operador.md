@@ -24,11 +24,11 @@ ponto de atendimento.
    - **Câmera**: toque em **Usar câmera** e aponte para o QR. Use **Virar
      câmera** para trocar entre traseira/frontal. Para tocar em **Parar
      câmera** ao terminar.
-8. Leia a cor da tela:
-   - 🟢 **Verde — Entregue**: registrado. Pode chamar o próximo.
-   - 🔴 **Vermelho — Já entregue**: este aluno já recebeu nesta sessão.
-   - 🟡 **Amarelo — QR inválido/inelegível**: QR de outro campus, inativo ou
-     danificado.
+8. Leia a cor da tela **e escute o bipe**:
+   - 🟢 **Verde — Entregue** + bipe **agudo** (ok).
+   - 🔴 **Vermelho — Já entregue** + bipe **grave** (erro).
+   - 🟡 **Amarelo — QR inválido/inelegível** + bipe **grave**.
+   - Use o botão de **alto-falante** (topo) para ligar/desligar o som.
 
 > **Câmera de celular**: funciona em iPhone (Safari) e Android (Chrome),
 > inclusive para **código de barras** além do QR. O navegador só libera a

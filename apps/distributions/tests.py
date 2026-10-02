@@ -466,3 +466,14 @@ class MobileUiTests(DistributionFixture):
         self.assertContains(response, 'id="cam-placeholder"')
         self.assertContains(response, 'id="feedback-icon"')
         self.assertContains(response, "vendor/zxing/zxing-browser.min.js")
+
+
+class BeepTests(DistributionFixture):
+    def test_operacao_tem_som_e_botao_mudo(self):
+        self.client.force_login(self.operator)
+        response = self.client.get(
+            reverse("distributions:operation", args=[self.distribution.pk])
+        )
+        self.assertContains(response, 'id="sound-toggle"')
+        self.assertContains(response, "AudioContext")
+        self.assertContains(response, "EXTRA_DELIVERED")

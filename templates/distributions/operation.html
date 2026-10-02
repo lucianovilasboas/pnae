@@ -11,7 +11,23 @@
         {{ distribution.campus.name }} ({{ distribution.get_status_display }})
       </p>
     </div>
-    <div class="flex flex-wrap gap-2 text-xs">
+    <div class="flex flex-wrap items-center gap-2 text-xs">
+      <button id="sound-toggle" type="button" aria-label="Ligar/desligar som" title="Ligar/desligar som"
+              class="flex items-center rounded-full border border-slate-300 px-3 py-1.5">
+        <svg id="sound-on" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M11.25 9.75L8.25 7.5H6A1.5 1.5 0 004.5 9v6A1.5 1.5 0 006 16.5h2.25l3 2.25V9.75z" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15.75 9.75a3 3 0 010 4.5M18.75 7.5a7.5 7.5 0 010 9" />
+        </svg>
+        <svg id="sound-off" xmlns="http://www.w3.org/2000/svg" class="hidden h-4 w-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M11.25 9.75L8.25 7.5H6A1.5 1.5 0 004.5 9v6A1.5 1.5 0 006 16.5h2.25l3 2.25V9.75z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 9.75l4.5 4.5m0-4.5l-4.5 4.5" />
+        </svg>
+      </button>
       <a href="{% url 'distributions:deliveries' distribution.pk %}"
          class="rounded-full border border-slate-300 px-3 py-1.5">Entregas</a>
       <a href="{% url 'distributions:report' distribution.pk %}"
@@ -121,6 +137,75 @@
     const EXTRAS_URL = "{% url 'distributions_api:extras' distribution.pk %}";
     const SUMMARY_URL = "{% url 'distributions_api:summary' distribution.pk %}";
 
+    // Bipes: tons gerados com Web Audio (sem arquivos). Destrava na 1ª interação.
+    const Sound = (() => {
+      let ctx = null;
+      let muted = localStorage.getItem('pnae-muted') === '1';
+
+      function ensure() {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        if (!ctx) ctx = new Ctx();
+        if (ctx.state === 'suspended') ctx.resume();
+        return ctx;
+      }
+
+      function tone(freq, offset, duration, type, gain) {
+        const c = ensure();
+        if (!c) return;
+        const osc = c.createOscillator();
+        const amp = c.createGain();
+        const t0 = c.currentTime + offset;
+        osc.type = type;
+        osc.frequency.value = freq;
+        amp.gain.setValueAtTime(0.0001, t0);
+        amp.gain.exponentialRampToValueAtTime(gain, t0 + 0.02);
+        amp.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+        osc.connect(amp).connect(c.destination);
+        osc.start(t0);
+        osc.stop(t0 + duration + 0.03);
+      }
+
+      return {
+        ensure,
+        ok() {
+          if (muted) return;
+          tone(880, 0, 0.12, 'sine', 0.2);
+          tone(1320, 0.12, 0.14, 'sine', 0.2);
+        },
+        fail() {
+          if (muted) return;
+          tone(300, 0, 0.18, 'square', 0.18);
+          tone(180, 0.18, 0.25, 'square', 0.18);
+        },
+        isMuted() { return muted; },
+        setMuted(value) {
+          muted = value;
+          localStorage.setItem('pnae-muted', value ? '1' : '0');
+        },
+      };
+    })();
+
+    // Destrava o áudio no primeiro gesto (tecla do scanner, toque ou clique).
+    ['keydown', 'pointerdown', 'touchstart'].forEach((evt) =>
+      window.addEventListener(evt, () => Sound.ensure(), { once: true, passive: true })
+    );
+
+    const soundBtn = document.getElementById('sound-toggle');
+    const soundOn = document.getElementById('sound-on');
+    const soundOff = document.getElementById('sound-off');
+    function renderSoundBtn() {
+      soundOn.classList.toggle('hidden', Sound.isMuted());
+      soundOff.classList.toggle('hidden', !Sound.isMuted());
+    }
+    soundBtn.addEventListener('click', () => {
+      Sound.setMuted(!Sound.isMuted());
+      renderSoundBtn();
+      if (!Sound.isMuted()) Sound.ok();
+    });
+    renderSoundBtn();
+
+
     const input = document.getElementById('scan');
     const fb = document.getElementById('feedback');
     const fbIcon = document.getElementById('feedback-icon');
@@ -144,6 +229,7 @@
     function paint(result, data) {
       const styles = {
         DELIVERED: ['border-emerald-500', 'bg-emerald-50', 'text-emerald-700', 'Entregue', '✓'],
+        EXTRA_DELIVERED: ['border-emerald-500', 'bg-emerald-50', 'text-emerald-700', 'Excedente registrado', '✓'],
         ALREADY_DELIVERED: ['border-red-500', 'bg-red-50', 'text-red-700', 'Já entregue', '✕'],
         INVALID_TOKEN: ['border-amber-500', 'bg-amber-50', 'text-amber-700', 'QR inválido', '?'],
         INELIGIBLE: ['border-amber-500', 'bg-amber-50', 'text-amber-700', 'Inelegível', '!'],
@@ -162,6 +248,9 @@
       }
       fbDetail.textContent = detail;
       extraBox.classList.toggle('hidden', result !== 'ALREADY_DELIVERED');
+      // Bipe: OK para entrega/excedente; erro para o resto.
+      if (result === 'DELIVERED' || result === 'EXTRA_DELIVERED') Sound.ok();
+      else Sound.fail();
     }
 
     async function post(url, body) {
