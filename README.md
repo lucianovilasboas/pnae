@@ -42,8 +42,20 @@ códigos de barras 1D via ZXing; a câmera requer HTTPS).
 | Auditoria | `/auditoria/` |
 
 Roteiro do operador (1 página) em
-[`docs/09-treinamento-operador.md`](docs/09-treinamento-operador.md). Deploy em
-produção (OVM-1) em [`docs/10-deploy-ovm1.md`](docs/10-deploy-ovm1.md).
+[`docs/09-treinamento-operador.md`](docs/09-treinamento-operador.md).
+
+## Deploy em produção (OVM-1)
+
+```bash
+cp .env.example .env          # preencha (DOMAIN, segredos, banco)
+./scripts/deploy.sh           # valida o .env, sobe a stack e espera o healthz
+docker exec -it pnae_app python manage.py createsuperuser
+./scripts/importar_alunos.sh --user SEU_EMAIL            # prévia
+./scripts/importar_alunos.sh --user SEU_EMAIL --apply    # grava
+```
+
+Passo a passo completo (script e manual) em
+[`docs/10-deploy-ovm1.md`](docs/10-deploy-ovm1.md).
 
 ## Como rodar (desenvolvimento)
 
