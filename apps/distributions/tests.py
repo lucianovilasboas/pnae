@@ -313,3 +313,89 @@ class ConcurrentScanTests(TransactionTestCase):
             ).count(),
             1,
         )
+
+
+class ReportTests(DistributionFixture):
+    def _scan(self, token=None):
+        return services.record_scan(
+            distribution=self.distribution,
+            token=self.token if token is None else token,
+            user=self.operator,
+        )
+
+    def test_relatorio_reconcilia_regular_excedente_estorno(self):
+        self._scan()
+        services.register_extra(
+            distribution=self.distribution,
+            student=self.student,
+            reason="Segunda refeição",
+            recorded_by=self.authorizer,
+            authorized_by=self.authorizer,
+        )
+        token2 = generate_token()
+        s2 = make_student(self.campus, self.group, "2026002", "Bruno Souza", token=token2)
+        self._scan(token2)
+        d2 = Delivery.objects.get(distribution=self.distribution, student=s2)
+        services.reverse_delivery(delivery=d2, reason="Erro de leitura", user=self.authorizer)
+
+        report = services.distribution_report(self.distribution)
+        self.assertEqual(report["summary"]["regularValid"], 1)
+        self.assertEqual(report["summary"]["extrasValid"], 1)
+        self.assertEqual(report["summary"]["reversed"], 1)
+        self.assertEqual(report["regular"].count(), 1)
+        self.assertEqual(report["extras"].count(), 1)
+        self.assertEqual(report["reversed_deliveries"].count(), 1)
+        self.assertEqual(report["by_class"][0]["regular"], 1)
+
+        rows = services.report_rows(self.distribution)
+        self.assertEqual(len(rows), 3)  # 1 regular válida + 1 excedente + 1 estornada
+
+    def test_api_report_json_e_csv(self):
+        self.client.force_login(self.operator)
+        self._scan()
+        url = reverse("distributions_api:report", args=[self.distribution.pk])
+        body = self.client.get(url).json()
+        self.assertEqual(body["summary"]["regularValid"], 1)
+        self.assertEqual(body["counts"]["regular"], 1)
+
+        response = self.client.get(url + "?format=csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response["Content-Type"])
+        self.assertIn("matricula;nome", response.content.decode())
+
+    def test_pagina_relatorio_csv(self):
+        self.client.force_login(self.operator)
+        self._scan()
+        response = self.client.get(
+            reverse("distributions:report-csv", args=[self.distribution.pk])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Ana Silva", response.content.decode())
+
+
+class DeliveriesPageTests(DistributionFixture):
+    def setUp(self):
+        super().setUp()
+        self.result = services.record_scan(
+            distribution=self.distribution, token=self.token, user=self.operator
+        )
+        self.url = reverse("distributions:deliveries", args=[self.distribution.pk])
+
+    def test_estorno_pela_pagina(self):
+        self.client.force_login(self.authorizer)
+        response = self.client.post(
+            self.url,
+            {"action": "reverse", "delivery_id": self.result.delivery.pk, "reason": "Erro"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.result.delivery.refresh_from_db()
+        self.assertEqual(self.result.delivery.status, DeliveryStatus.ESTORNADA)
+
+    def test_operador_sem_permissao_nao_estorna(self):
+        self.client.force_login(self.operator)  # sem can_reverse
+        self.client.post(
+            self.url,
+            {"action": "reverse", "delivery_id": self.result.delivery.pk, "reason": "x"},
+        )
+        self.result.delivery.refresh_from_db()
+        self.assertEqual(self.result.delivery.status, DeliveryStatus.VALIDA)

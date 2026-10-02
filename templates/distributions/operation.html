@@ -10,11 +10,15 @@
         {{ distribution.campus.name }} ({{ distribution.get_status_display }})
       </p>
     </div>
-    <a href="{% url 'distributions:list' %}"
-       class="rounded border border-slate-300 px-3 py-1 text-sm">Voltar</a>
-  </div>
-
-  {% if distribution.status != 'OPEN' %}
+    <div class="flex gap-2">
+      <a href="{% url 'distributions:deliveries' distribution.pk %}"
+         class="rounded border border-slate-300 px-3 py-1 text-sm">Entregas</a>
+      <a href="{% url 'distributions:report' distribution.pk %}"
+         class="rounded border border-slate-300 px-3 py-1 text-sm">Relatório</a>
+      <a href="{% url 'distributions:list' %}"
+         class="rounded border border-slate-300 px-3 py-1 text-sm">Voltar</a>
+    </div>
+  </div>  {% if distribution.status != 'OPEN' %}
     <div class="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
       Esta distribuição não está aberta. Abra-a na lista de distribuições para operar.
     </div>

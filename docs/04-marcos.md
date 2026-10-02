@@ -46,10 +46,10 @@ Sem código. Destrava o backend.
   (`ImportJob`). `V:` importar arquivo de teste; linhas ruins rejeitadas.
 - [x] **M1.7** Exportação de QR (folha de impressão). `V:` gerar e imprimir um
   lote; QR lido confere com o estudante.
-- [ ] **M1.8** App `audit` + `AuditEvent`; log de ações administrativas.
-  Modelo, admin e `record_event` prontos; eventos de importação e QR já
-  gravados. Falta instrumentar as demais ações administrativas.
-  `V:` eventos gravados ao criar/editar.
+- [x] **M1.8** App `audit` + `AuditEvent`; log de ações administrativas.
+  Modelo, admin, `record_event` e mixin `AuditedAdminMixin` (criação/edição/
+  exclusão no admin). Eventos de importação, QR, distribuição e entrega também
+  gravados. `V:` eventos gravados ao criar/editar.
 
 > Importação e QR entregues na branch `feat/students-import-qr`: importer
 > CSV/XLSX com prévia/aplicação em duas fases, folha de impressão de QR com
@@ -96,16 +96,21 @@ duplicidade bloqueada e totais coerentes.
 
 ## Marco 3 — Excedentes, correção e relatório (3–5 dias)
 
-- [ ] **M3.1** Autorização de excedente com motivo e autorizador
+- [x] **M3.1** Autorização de excedente com motivo e autorizador
   (`extras`). `V:` excedente sem motivo/autorizador é rejeitado.
-- [ ] **M3.2** Estorno auditável (`reverse`): original preservado.
+- [x] **M3.2** Estorno auditável (`reverse`): original preservado.
   `V:` estorno não apaga; nova regular liberada após estorno.
-- [ ] **M3.3** Lista de pendentes com filtro por turma. `V:` pendentes batem com
+- [x] **M3.3** Lista de pendentes com filtro por turma. `V:` pendentes batem com
   `summary`.
-- [ ] **M3.4** Relatório diário (página imprimível + CSV/PDF).
+- [x] **M3.4** Relatório diário (página imprimível + CSV).
   `V:` reconcilia regulares, excedentes e estornos com o histórico de eventos.
-- [ ] **M3.5** Tela de auditoria com filtros (data, usuário, entidade, ação).
+- [x] **M3.5** Tela de auditoria com filtros (data, usuário, entidade, ação).
   `V:` localizar um evento pelo filtro.
+
+> Marco 3 entregue na branch `feat/reports-reversals`: relatório diário
+> (HTML imprimível + CSV + `GET /api/distributions/{id}/report`), página de
+> entregas com estorno, tela de auditoria com filtros e mixin de auditoria no
+> admin (fecha o M1.8).
 
 **Aceite do marco:** relatório reconcilia entregas regulares, excedentes e
 estornos com o histórico de eventos.

@@ -1,17 +1,20 @@
-"""Páginas de distribuição: painel, cadastro, operação e pendentes."""
+"""Páginas de distribuição: painel, cadastro, operação, entregas e relatório."""
+
+import csv
+import io
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date, parse_datetime
 
-from apps.accounts.decorators import is_operator
+from apps.accounts.decorators import can_reverse, is_operator
 from apps.campus.models import ClassGroup
 from apps.campus.selectors import resolve_campus
 
 from . import services
-from .models import Distribution, DistributionStatus
+from .models import Delivery, Distribution, DistributionStatus
 from .services import DistributionStateError
 
 
@@ -148,4 +151,75 @@ def pending(request, pk):
             "groups": groups,
             "selected_group": class_group,
         },
+    )
+
+
+@login_required
+def deliveries(request, pk):
+    denied = _require_operator(request)
+    if denied:
+        return denied
+
+    _campus, queryset = _scoped_distributions(request)
+    distribution = get_object_or_404(queryset, pk=pk)
+
+    if request.method == "POST" and request.POST.get("action") == "reverse":
+        if not can_reverse(request.user):
+            messages.error(request, "Você não tem permissão para estornar.")
+        else:
+            delivery = get_object_or_404(Delivery, pk=request.POST.get("delivery_id"))
+            try:
+                services.reverse_delivery(
+                    delivery=delivery, reason=request.POST.get("reason", ""), user=request.user
+                )
+                messages.success(request, "Entrega estornada (registro original preservado).")
+            except DistributionStateError as exc:
+                messages.error(request, str(exc))
+        return redirect("distributions:deliveries", pk=distribution.pk)
+
+    items = (
+        Delivery.objects.filter(distribution=distribution)
+        .select_related("student", "student__class_group", "recorded_by", "authorized_by", "reversed_by")
+        .order_by("-delivered_at")
+    )
+    return render(
+        request,
+        "distributions/deliveries.html",
+        {"distribution": distribution, "deliveries": items, "can_reverse": can_reverse(request.user)},
+    )
+
+
+@login_required
+def report(request, pk):
+    denied = _require_operator(request)
+    if denied:
+        return denied
+
+    _campus, queryset = _scoped_distributions(request)
+    distribution = get_object_or_404(queryset, pk=pk)
+    data = services.distribution_report(distribution)
+    return render(request, "distributions/report.html", {"distribution": distribution, **data})
+
+
+@login_required
+def report_csv(request, pk):
+    denied = _require_operator(request)
+    if denied:
+        return denied
+
+    _campus, queryset = _scoped_distributions(request)
+    distribution = get_object_or_404(queryset, pk=pk)
+
+    buffer = io.StringIO()
+    fieldnames = [
+        "matricula", "nome", "turma", "tipo", "situacao", "entregue_em",
+        "registrado_por", "autorizado_por", "motivo", "estornado_por", "motivo_estorno",
+    ]
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames, delimiter=";")
+    writer.writeheader()
+    writer.writerows(services.report_rows(distribution))
+    return HttpResponse(
+        buffer.getvalue(),
+        content_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="relatorio-{distribution.pk}.csv"'},
     )

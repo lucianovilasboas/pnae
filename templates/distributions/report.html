@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Relatório — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <div class="mb-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Relatório diário</h1>
+      <p class="text-sm text-slate-600">
+        {{ distribution.service_date }} — {{ distribution.get_meal_type_display }} —
+        {{ distribution.campus.name }} ({{ distribution.get_status_display }})
+      </p>
+    </div>
+    <div class="no-print flex gap-2">
+      <a href="{% url 'distributions:report-csv' distribution.pk %}"
+         class="rounded bg-emerald-700 px-3 py-1 text-sm text-white">Baixar CSV</a>
+      <button onclick="window.print()" class="rounded border border-slate-300 px-3 py-1 text-sm">
+        Imprimir
+      </button>
+      <a href="{% url 'distributions:list' %}"
+         class="rounded border border-slate-300 px-3 py-1 text-sm">Voltar</a>
+    </div>
+  </div>
+
+  <section class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <div class="rounded bg-white p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Aptos</div>
+      <div class="text-2xl font-bold">{{ summary.eligible }}</div>
+    </div>
+    <div class="rounded bg-emerald-50 p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Regulares</div>
+      <div class="text-2xl font-bold text-emerald-700">{{ summary.regularValid }}</div>
+    </div>
+    <div class="rounded bg-amber-50 p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Excedentes</div>
+      <div class="text-2xl font-bold text-amber-700">{{ summary.extrasValid }}</div>
+    </div>
+    <div class="rounded bg-slate-50 p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Pendentes</div>
+      <div class="text-2xl font-bold">{{ summary.pending }}</div>
+    </div>
+    <div class="rounded bg-red-50 p-3 text-center shadow">
+      <div class="text-xs uppercase text-slate-500">Estornos</div>
+      <div class="text-2xl font-bold text-red-700">{{ summary.reversed }}</div>
+    </div>
+  </section>
+
+  <section class="mb-6 rounded-lg bg-white p-4 shadow">
+    <h2 class="mb-2 font-semibold">Por turma</h2>
+    <table class="w-full text-sm">
+      <thead><tr class="border-b text-left text-slate-500">
+        <th class="py-1">Turma</th><th>Aptos</th><th>Regulares</th><th>Pendentes</th>
+      </tr></thead>
+      <tbody>
+        {% for row in by_class %}
+          <tr class="border-b">
+            <td class="py-1">{{ row.name }}</td>
+            <td>{{ row.eligible }}</td>
+            <td>{{ row.regular }}</td>
+            <td>{{ row.pending }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="py-2 text-slate-500">Sem turmas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="mb-6 rounded-lg bg-white p-4 shadow">
+    <h2 class="mb-2 font-semibold">Excedentes ({{ extras|length }})</h2>
+    <table class="w-full text-sm">
+      <thead><tr class="border-b text-left text-slate-500">
+        <th class="py-1">Estudante</th><th>Motivo</th><th>Autorizado por</th>
+      </tr></thead>
+      <tbody>
+        {% for delivery in extras %}
+          <tr class="border-b">
+            <td class="py-1">{{ delivery.student.full_name }}</td>
+            <td>{{ delivery.reason }}</td>
+            <td>{{ delivery.authorized_by|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="py-2 text-slate-500">Nenhum excedente.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="rounded-lg bg-white p-4 shadow">
+    <h2 class="mb-2 font-semibold">Estornos ({{ reversed_deliveries|length }})</h2>
+    <table class="w-full text-sm">
+      <thead><tr class="border-b text-left text-slate-500">
+        <th class="py-1">Estudante</th><th>Tipo</th><th>Motivo</th><th>Estornado por</th>
+      </tr></thead>
+      <tbody>
+        {% for delivery in reversed_deliveries %}
+          <tr class="border-b">
+            <td class="py-1">{{ delivery.student.full_name }}</td>
+            <td>{{ delivery.get_delivery_type_display }}</td>
+            <td>{{ delivery.reversal_reason }}</td>
+            <td>{{ delivery.reversed_by|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="py-2 text-slate-500">Nenhum estorno.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <style>@media print { .no-print { display: none; } body { background: #fff; } }</style>
+{% endblock %}

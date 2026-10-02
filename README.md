@@ -9,11 +9,12 @@ autorização e motivo.
 - **Plano de produto (MVP):** [`plano_mvp_ifmg_alimenta.md`](plano_mvp_ifmg_alimenta.md)
 - **Plano de implementação (engenharia):** [`docs/`](docs/)
 
-> **Status:** Marcos 1 e 2 entregues. Projeto Django completo (apps, modelos,
-> migrations com índice único parcial), admin, Docker Compose, importação de
-> estudantes (CSV/XLSX), QR Codes e **operação de entrega** com leitura
-> atômica (`/scan`), bloqueio de duplicidade e totais ao vivo. Próximo:
-> Marco 3 (excedente/estorno/relatório) — ver
+> **Status:** Marcos 1, 2 e 3 entregues. Projeto Django completo (apps, modelos,
+> migrations com índice único parcial), admin auditado, Docker Compose,
+> importação de estudantes (CSV/XLSX), QR Codes, **operação de entrega** com
+> leitura atômica (`/scan`) e bloqueio de duplicidade, **relatório diário**
+> (página imprimível + CSV), estorno auditável e tela de auditoria. Próximo:
+> Marco 4 (piloto e estabilização) — ver
 > [`docs/04-marcos.md`](docs/04-marcos.md).
 
 ## Telas principais
@@ -23,9 +24,12 @@ autorização e motivo.
 | Painel | `/` |
 | Distribuições (criar/abrir/encerrar) | `/distribuicoes/` |
 | Operação de entrega | `/distribuicoes/<id>/operar/` |
+| Entregas (estorno) | `/distribuicoes/<id>/entregas/` |
 | Pendentes | `/distribuicoes/<id>/pendentes/` |
+| Relatório diário | `/distribuicoes/<id>/relatorio/` |
 | Importar estudantes | `/estudantes/importar/` |
 | QR Codes | `/estudantes/qr/` |
+| Auditoria | `/auditoria/` |
 
 ## Como rodar (desenvolvimento)
 

@@ -20,6 +20,7 @@ urlpatterns = [
     path("api/students/", include("apps.students.urls")),
     path("api/", include("apps.distributions.urls")),
     path("estudantes/", include("apps.students.urls_pages")),
+    path("auditoria/", include("apps.audit.urls")),
     path("", include("apps.distributions.urls_pages")),
 ]
 

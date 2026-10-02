@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from apps.audit.admin_mixin import AuditedAdminMixin
+
 from .models import ImportJob, Student
 
 
 @admin.register(Student)
-class StudentAdmin(admin.ModelAdmin):
+class StudentAdmin(AuditedAdminMixin, admin.ModelAdmin):
     list_display = ("full_name", "registration_number", "campus", "class_group", "active")
     list_filter = ("campus", "class_group", "active")
     search_fields = ("full_name", "registration_number", "email")

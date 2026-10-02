@@ -4,10 +4,12 @@ O endpoint mais sensível é `POST /api/distributions/{id}/scan`: ele decide a
 entrega regular de forma atômica e é o caminho quente da operação.
 """
 
+import csv
+import io
 import json
 
 from django.db import IntegrityError
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
@@ -235,5 +237,41 @@ def distribution_pending(request, pk):
                 }
                 for student in students[:500]
             ],
+        }
+    )
+
+
+@require_GET
+@api_login_required
+def distribution_report(request, pk):
+    distribution = _distribution(request, pk)
+
+    if request.GET.get("format") == "csv":
+        buffer = io.StringIO()
+        fieldnames = [
+            "matricula", "nome", "turma", "tipo", "situacao", "entregue_em",
+            "registrado_por", "autorizado_por", "motivo", "estornado_por", "motivo_estorno",
+        ]
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames, delimiter=";")
+        writer.writeheader()
+        writer.writerows(services.report_rows(distribution))
+        return HttpResponse(
+            buffer.getvalue(),
+            content_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="relatorio-{distribution.pk}.csv"'
+            },
+        )
+
+    report = services.distribution_report(distribution)
+    return JsonResponse(
+        {
+            "summary": report["summary"],
+            "byClass": report["by_class"],
+            "counts": {
+                "regular": report["regular"].count(),
+                "extras": report["extras"].count(),
+                "reversed": report["reversed_deliveries"].count(),
+            },
         }
     )

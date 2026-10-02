@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Entregas — IFMG Alimenta{% endblock %}
+
+{% block content %}
+  <div class="mb-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Entregas</h1>
+      <p class="text-sm text-slate-600">
+        {{ distribution.service_date }} — {{ distribution.get_meal_type_display }} —
+        {{ distribution.campus.name }}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'distributions:report' distribution.pk %}"
+         class="rounded border border-slate-300 px-3 py-1 text-sm">Relatório</a>
+      <a href="{% url 'distributions:operation' distribution.pk %}"
+         class="rounded border border-slate-300 px-3 py-1 text-sm">Operar</a>
+      <a href="{% url 'distributions:list' %}"
+         class="rounded border border-slate-300 px-3 py-1 text-sm">Voltar</a>
+    </div>
+  </div>
+
+  <div class="overflow-hidden rounded-lg bg-white shadow">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-left text-slate-500">
+        <tr>
+          <th class="p-3">Hora</th><th>Estudante</th><th>Tipo</th><th>Situação</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for delivery in deliveries %}
+          <tr class="border-t {% if delivery.status == 'ESTORNADA' %}text-slate-400 line-through{% endif %}">
+            <td class="p-3">{{ delivery.delivered_at|date:"H:i" }}</td>
+            <td>{{ delivery.student.full_name }} ({{ delivery.student.registration_number }})</td>
+            <td>{{ delivery.get_delivery_type_display }}</td>
+            <td>{{ delivery.get_status_display }}</td>
+            <td class="p-3 text-right">
+              {% if delivery.status == 'VALIDA' and can_reverse %}
+                <form method="post" class="inline-flex items-center gap-1">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="reverse">
+                  <input type="hidden" name="delivery_id" value="{{ delivery.pk }}">
+                  <input type="text" name="reason" placeholder="Motivo do estorno" required
+                         class="rounded border border-slate-300 p-1 text-xs">
+                  <button class="rounded border border-red-300 px-2 py-1 text-xs text-red-700">
+                    Estornar
+                  </button>
+                </form>
+              {% elif delivery.status == 'VALIDA' %}
+                <span class="text-xs text-slate-400">sem permissão</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="p-4 text-center text-slate-500">Nenhuma entrega.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

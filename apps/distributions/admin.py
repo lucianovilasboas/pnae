@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from apps.audit.admin_mixin import AuditedAdminMixin
+
 from .models import Delivery, Distribution
 
 
 @admin.register(Distribution)
-class DistributionAdmin(admin.ModelAdmin):
+class DistributionAdmin(AuditedAdminMixin, admin.ModelAdmin):
     list_display = ("service_date", "meal_type", "campus", "status", "estimated_quantity")
     list_filter = ("campus", "status", "meal_type", "service_date")
     search_fields = ("campus__name",)

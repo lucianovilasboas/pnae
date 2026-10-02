@@ -67,6 +67,10 @@
                    class="rounded bg-emerald-700 px-3 py-1 text-white">Operar</a>
                 <a href="{% url 'distributions:pending' distribution.pk %}"
                    class="rounded border border-slate-300 px-3 py-1">Pendentes</a>
+                <a href="{% url 'distributions:deliveries' distribution.pk %}"
+                   class="rounded border border-slate-300 px-3 py-1">Entregas</a>
+                <a href="{% url 'distributions:report' distribution.pk %}"
+                   class="rounded border border-slate-300 px-3 py-1">Relatório</a>
                 <form method="post" class="inline">
                   {% csrf_token %}
                   <input type="hidden" name="action" value="close">
@@ -76,6 +80,10 @@
               {% else %}
                 <a href="{% url 'distributions:pending' distribution.pk %}"
                    class="rounded border border-slate-300 px-3 py-1">Pendentes</a>
+                <a href="{% url 'distributions:deliveries' distribution.pk %}"
+                   class="rounded border border-slate-300 px-3 py-1">Entregas</a>
+                <a href="{% url 'distributions:report' distribution.pk %}"
+                   class="rounded border border-slate-300 px-3 py-1">Relatório</a>
               {% endif %}
             </td>
           </tr>

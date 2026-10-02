@@ -16,6 +16,9 @@
           {% if user.is_superuser or user.role == 'ADMIN' or user.role == 'OPERATOR' %}
             <a href="{% url 'distributions:list' %}" class="hover:underline">Distribuições</a>
           {% endif %}
+          {% if user.is_superuser or user.role == 'ADMIN' or user.role == 'MANAGER' %}
+            <a href="{% url 'audit:list' %}" class="hover:underline">Auditoria</a>
+          {% endif %}
           {% if user.is_superuser or user.role == 'ADMIN' %}
             <a href="{% url 'students_pages:import-page' %}" class="hover:underline">Importar</a>
             <a href="{% url 'students_pages:qr-page' %}" class="hover:underline">QR Codes</a>

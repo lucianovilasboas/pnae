@@ -260,3 +260,81 @@ def pending_students(distribution, class_group=None):
     if class_group is not None:
         queryset = queryset.filter(class_group=class_group)
     return queryset
+
+
+def distribution_report(distribution) -> dict:
+    """Dados do relatório diário, com reconciliação por tipo/status."""
+    deliveries = Delivery.objects.filter(distribution=distribution).select_related(
+        "student", "student__class_group", "recorded_by", "authorized_by", "reversed_by"
+    )
+    regular = deliveries.filter(
+        delivery_type=DeliveryType.REGULAR, status=DeliveryStatus.VALIDA
+    )
+    extras = deliveries.filter(
+        delivery_type=DeliveryType.EXCEDENTE, status=DeliveryStatus.VALIDA
+    )
+    reversed_deliveries = deliveries.filter(status=DeliveryStatus.ESTORNADA)
+
+    by_class = []
+    for group in distribution.campus.class_groups.filter(active=True).order_by("name"):
+        eligible = Student.objects.filter(
+            campus_id=distribution.campus_id, active=True, class_group=group
+        ).count()
+        served = regular.filter(student__class_group=group).count()
+        by_class.append(
+            {
+                "name": group.name,
+                "eligible": eligible,
+                "regular": served,
+                "pending": max(eligible - served, 0),
+            }
+        )
+    without_class = Student.objects.filter(
+        campus_id=distribution.campus_id, active=True, class_group__isnull=True
+    ).count()
+    if without_class:
+        served = regular.filter(student__class_group__isnull=True).count()
+        by_class.append(
+            {
+                "name": "Sem turma",
+                "eligible": without_class,
+                "regular": served,
+                "pending": max(without_class - served, 0),
+            }
+        )
+
+    return {
+        "summary": distribution_summary(distribution),
+        "regular": regular.order_by("student__full_name"),
+        "extras": extras.order_by("student__full_name"),
+        "reversed_deliveries": reversed_deliveries.order_by("student__full_name"),
+        "by_class": by_class,
+    }
+
+
+def report_rows(distribution):
+    """Linhas planas para o CSV (inclui excedentes e estornadas)."""
+    rows = []
+    for delivery in (
+        Delivery.objects.filter(distribution=distribution)
+        .select_related(
+            "student", "student__class_group", "recorded_by", "authorized_by", "reversed_by"
+        )
+        .order_by("delivered_at")
+    ):
+        rows.append(
+            {
+                "matricula": delivery.student.registration_number,
+                "nome": delivery.student.full_name,
+                "turma": delivery.student.class_group.name if delivery.student.class_group else "",
+                "tipo": delivery.delivery_type,
+                "situacao": delivery.status,
+                "entregue_em": delivery.delivered_at.isoformat(),
+                "registrado_por": getattr(delivery.recorded_by, "email", ""),
+                "autorizado_por": getattr(delivery.authorized_by, "email", ""),
+                "motivo": delivery.reason or "",
+                "estornado_por": getattr(delivery.reversed_by, "email", ""),
+                "motivo_estorno": delivery.reversal_reason or "",
+            }
+        )
+    return rows
