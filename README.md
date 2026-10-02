@@ -1,4 +1,4 @@
-# IFMG Alimenta (PNAE)
+# PNAE [CPN] — IFMG Alimenta
 
 Sistema web responsivo/PWA (instalável) para registrar e acompanhar a **distribuição de
 alimentação escolar por QR Code** do PNAE no IFMG. O foco do MVP é uma sessão

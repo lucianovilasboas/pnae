@@ -514,7 +514,7 @@ class PwaTests(DistributionFixture):
         self.assertEqual(manifest.status_code, 200)
         data = manifest.json()
         self.assertEqual(data["display"], "standalone")
-        self.assertEqual(data["short_name"], "IFMG Alimenta")
+        self.assertEqual(data["short_name"], "PNAE [CPN]")
         self.assertTrue(any(i.get("purpose") == "maskable" for i in data["icons"]))
 
         sw = self.client.get(reverse("service-worker"))

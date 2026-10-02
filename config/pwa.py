@@ -10,8 +10,8 @@ from django.http import HttpResponse, JsonResponse
 
 def manifest(request):
     data = {
-        "name": "IFMG Alimenta",
-        "short_name": "IFMG Alimenta",
+        "name": "PNAE [CPN]",
+        "short_name": "PNAE [CPN]",
         "description": "Registro de distribuição de alimentação escolar (PNAE) por QR Code.",
         "start_url": "/",
         "scope": "/",

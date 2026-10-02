@@ -1,8 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Entrar — IFMG Alimenta{% endblock %}
+{% load static %}
+{% block title %}Entrar — PNAE [CPN]{% endblock %}
 
 {% block content %}
   <div class="mx-auto mt-10 max-w-sm rounded-lg bg-white p-6 shadow">
+    <img src="{% static 'img/ifmg-campus-pn.png' %}" alt="IFMG Campus Ponte Nova"
+         class="mx-auto mb-4 h-12 w-auto">
     <h1 class="mb-4 text-xl font-bold">Entrar</h1>
 
     {% if form.errors %}

@@ -4,15 +4,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}IFMG Alimenta{% endblock %}</title>
+  <title>{% block title %}PNAE [CPN]{% endblock %}</title>
   {# ADR-004: Tailwind via CDN no MVP; build standalone depois. #}
   <script src="https://cdn.tailwindcss.com"></script>
   {# PWA: instalável (manifest + service worker + ícones). #}
   <link rel="manifest" href="{% url 'manifest' %}">
   <meta name="theme-color" content="#047857">
+  <link rel="icon" href="{% static 'icons/icon-192.png' %}">
   <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="IFMG Alimenta">
+  <meta name="apple-mobile-web-app-title" content="PNAE [CPN]">
   <style>
     /* Esconde o marcador nativo do <summary> (ícone do hambúrguer é próprio). */
     summary.menu-toggle::-webkit-details-marker { display: none; }
@@ -23,11 +24,16 @@
   <header class="sticky top-0 z-30 bg-emerald-700 text-white shadow">
     <div class="mx-auto max-w-5xl px-4 py-3">
       <div class="flex items-center justify-between gap-2">
-        <a href="{% url 'distributions:home' %}" class="text-lg font-semibold">IFMG Alimenta</a>
+        <a href="{% url 'distributions:home' %}" class="flex items-center gap-2">
+          <img src="{% static 'img/ifmg-campus-pn.png' %}" alt="IFMG Campus Ponte Nova"
+               class="h-9 w-auto rounded bg-white p-0.5">
+          <span class="text-lg font-semibold">PNAE [CPN]</span>
+        </a>
 
         {% if user.is_authenticated %}
           <div class="flex items-center gap-2">
-            <form method="post" action="{% url 'logout' %}">
+            {# "Sair" no desktop; no celular fica dentro do menu. #}
+            <form method="post" action="{% url 'logout' %}" class="hidden sm:block">
               {% csrf_token %}
               <button class="rounded-full bg-emerald-800 px-3 py-1.5 text-sm hover:bg-emerald-900">
                 Sair
@@ -48,6 +54,13 @@
                 <nav class="flex flex-col gap-1">
                   {% include "_nav_links.html" with link_class="block rounded-lg px-3 py-2 hover:bg-emerald-800" active_class="bg-emerald-800 font-semibold" %}
                 </nav>
+                <hr class="my-1 border-white/20">
+                <form method="post" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                  <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-emerald-800">
+                    Sair ({{ user.get_short_name }})
+                  </button>
+                </form>
               </div>
             </details>
           </div>
@@ -82,7 +95,7 @@
   {# Botão "Instalar app" (PWA). Aparece quando o navegador permitir. #}
   <div id="install-bar" class="fixed inset-x-0 bottom-0 z-40 hidden p-3">
     <div class="mx-auto flex max-w-5xl items-center justify-between gap-2 rounded-2xl bg-slate-900/95 px-4 py-3 text-white shadow-xl">
-      <span id="install-text" class="text-sm">Instalar o IFMG Alimenta no aparelho?</span>
+      <span id="install-text" class="text-sm">Instalar o PNAE [CPN] no aparelho?</span>
       <div class="flex gap-2">
         <button id="install-accept" class="rounded-full bg-emerald-600 px-3 py-1.5 text-sm">Instalar</button>
         <button id="install-dismiss" class="rounded-full border border-white/30 px-3 py-1.5 text-sm">Agora não</button>
