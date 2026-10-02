@@ -43,7 +43,61 @@
     </a>
   </form>
 
-  <div class="overflow-x-auto rounded-lg bg-white shadow">
+  {# Mobile: cards #}
+  <ul class="space-y-3 sm:hidden">
+    {% for distribution in distributions %}
+      <li class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="font-semibold">{{ distribution.service_date }} — {{ distribution.get_meal_type_display }}</div>
+            <div class="text-xs text-slate-500">{{ distribution.campus.name }}</div>
+          </div>
+          <span class="shrink-0 rounded-full px-2 py-0.5 text-xs
+            {% if distribution.status == 'OPEN' %}bg-emerald-100 text-emerald-800
+            {% elif distribution.status == 'DRAFT' %}bg-slate-100 text-slate-700
+            {% else %}bg-amber-100 text-amber-800{% endif %}">
+            {{ distribution.get_status_display }}
+          </span>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2 text-xs">
+          {% if distribution.status == 'DRAFT' %}
+            <form method="post" class="inline">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="open">
+              <input type="hidden" name="id" value="{{ distribution.pk }}">
+              <button class="rounded-full bg-emerald-700 px-3 py-1.5 text-white">Abrir</button>
+            </form>
+          {% else %}
+            {% if distribution.status == 'OPEN' %}
+              <a href="{% url 'distributions:operation' distribution.pk %}"
+                 class="rounded-full bg-emerald-700 px-3 py-1.5 text-white">Operar</a>
+            {% endif %}
+            <a href="{% url 'distributions:pending' distribution.pk %}"
+               class="rounded-full border border-slate-300 px-3 py-1.5">Pendentes</a>
+            <a href="{% url 'distributions:deliveries' distribution.pk %}"
+               class="rounded-full border border-slate-300 px-3 py-1.5">Entregas</a>
+            <a href="{% url 'distributions:report' distribution.pk %}"
+               class="rounded-full border border-slate-300 px-3 py-1.5">Relatório</a>
+            {% if distribution.status == 'OPEN' %}
+              <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="close">
+                <input type="hidden" name="id" value="{{ distribution.pk }}">
+                <button class="rounded-full border border-slate-300 px-3 py-1.5">Encerrar</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        </div>
+      </li>
+    {% empty %}
+      <li class="rounded-2xl bg-white p-4 text-center text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">
+        Nenhuma distribuição.
+      </li>
+    {% endfor %}
+  </ul>
+
+  {# Desktop: tabela #}
+  <div class="hidden overflow-x-auto rounded-lg bg-white shadow sm:block">
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-left text-slate-500">
         <tr>

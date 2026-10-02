@@ -44,9 +44,24 @@
     </div>
   </section>
 
-  <section class="mb-6 overflow-x-auto rounded-lg bg-white p-4 shadow">
+  <section class="mb-6 rounded-lg bg-white p-4 shadow">
     <h2 class="mb-2 font-semibold">Por turma</h2>
-    <table class="w-full text-sm">
+    <ul class="space-y-2 sm:hidden print:hidden">
+      {% for row in by_class %}
+        <li class="rounded-xl bg-slate-50 p-3">
+          <div class="font-semibold">{{ row.name }}</div>
+          <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+            <span class="rounded-full bg-white px-2 py-0.5">Aptos {{ row.eligible }}</span>
+            <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">Regulares {{ row.regular }}</span>
+            <span class="rounded-full bg-white px-2 py-0.5">Pendentes {{ row.pending }}</span>
+          </div>
+        </li>
+      {% empty %}
+        <li class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">Sem turmas.</li>
+      {% endfor %}
+    </ul>
+    <div class="hidden overflow-x-auto sm:block print:block">
+      <table class="w-full text-sm">
       <thead><tr class="border-b text-left text-slate-500">
         <th class="py-1">Turma</th><th>Aptos</th><th>Regulares</th><th>Pendentes</th>
       </tr></thead>
@@ -63,11 +78,24 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </section>
 
-  <section class="mb-6 overflow-x-auto rounded-lg bg-white p-4 shadow">
+  <section class="mb-6 rounded-lg bg-white p-4 shadow">
     <h2 class="mb-2 font-semibold">Excedentes ({{ extras|length }})</h2>
-    <table class="w-full text-sm">
+    <ul class="space-y-2 sm:hidden print:hidden">
+      {% for delivery in extras %}
+        <li class="rounded-xl bg-amber-50 p-3">
+          <div class="font-semibold">{{ delivery.student.full_name }}</div>
+          <div class="text-xs text-slate-500">{{ delivery.reason }}</div>
+          <div class="text-xs text-slate-400">Autorizado por: {{ delivery.authorized_by|default:"—" }}</div>
+        </li>
+      {% empty %}
+        <li class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">Nenhum excedente.</li>
+      {% endfor %}
+    </ul>
+    <div class="hidden overflow-x-auto sm:block print:block">
+      <table class="w-full text-sm">
       <thead><tr class="border-b text-left text-slate-500">
         <th class="py-1">Estudante</th><th>Motivo</th><th>Autorizado por</th>
       </tr></thead>
@@ -83,11 +111,24 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </section>
 
   <section class="rounded-lg bg-white p-4 shadow">
     <h2 class="mb-2 font-semibold">Estornos ({{ reversed_deliveries|length }})</h2>
-    <table class="w-full text-sm">
+    <ul class="space-y-2 sm:hidden print:hidden">
+      {% for delivery in reversed_deliveries %}
+        <li class="rounded-xl bg-red-50 p-3">
+          <div class="font-semibold">{{ delivery.student.full_name }}</div>
+          <div class="text-xs text-slate-500">{{ delivery.get_delivery_type_display }} — {{ delivery.reversal_reason }}</div>
+          <div class="text-xs text-slate-400">Estornado por: {{ delivery.reversed_by|default:"—" }}</div>
+        </li>
+      {% empty %}
+        <li class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">Nenhum estorno.</li>
+      {% endfor %}
+    </ul>
+    <div class="hidden overflow-x-auto sm:block print:block">
+      <table class="w-full text-sm">
       <thead><tr class="border-b text-left text-slate-500">
         <th class="py-1">Estudante</th><th>Tipo</th><th>Motivo</th><th>Estornado por</th>
       </tr></thead>
@@ -104,6 +145,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </section>
 
   <style>@media print { .no-print { display: none; } body { background: #fff; } }</style>

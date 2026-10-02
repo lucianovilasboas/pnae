@@ -29,7 +29,16 @@
   {% if errors %}
     <section class="mb-6 rounded-lg bg-white p-4 shadow">
       <h2 class="mb-2 font-semibold text-red-700">Linhas rejeitadas ({{ job.rejected_rows }})</h2>
-      <table class="w-full text-sm">
+      <ul class="space-y-2 sm:hidden">
+        {% for error in errors %}
+          <li class="rounded-xl bg-red-50 p-3">
+            <div class="text-sm font-medium">Linha {{ error.line }} — {{ error.registration_number|default:"—" }}</div>
+            <div class="text-xs text-red-700">{{ error.reason }}</div>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="hidden overflow-x-auto sm:block">
+        <table class="w-full text-sm">
         <thead><tr class="border-b text-left text-slate-500">
           <th class="py-1">Linha</th><th>Matrícula</th><th>Motivo</th>
         </tr></thead>
@@ -43,6 +52,7 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
       {% if job.rejected_rows > errors|length %}
         <p class="mt-2 text-xs text-slate-500">Exibindo as primeiras {{ errors|length }}.</p>
       {% endif %}
@@ -56,7 +66,19 @@
   {% if valid %}
     <section class="mb-6 rounded-lg bg-white p-4 shadow">
       <h2 class="mb-2 font-semibold">Prévia de válidos ({{ valid_total }})</h2>
-      <table class="w-full text-sm">
+      <ul class="space-y-2 sm:hidden">
+        {% for row in valid %}
+          <li class="rounded-xl bg-slate-50 p-3">
+            <div class="text-sm font-medium">{{ row.full_name }}</div>
+            <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+              <span class="rounded-full bg-white px-2 py-0.5">{{ row.registration_number }}</span>
+              <span class="rounded-full bg-white px-2 py-0.5">{{ row.class_group.name|default:"sem turma" }}</span>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="hidden overflow-x-auto sm:block">
+        <table class="w-full text-sm">
         <thead><tr class="border-b text-left text-slate-500">
           <th class="py-1">Matrícula</th><th>Nome</th><th>Turma</th>
         </tr></thead>
@@ -70,6 +92,7 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
     </section>
   {% endif %}
 

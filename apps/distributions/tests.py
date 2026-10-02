@@ -477,3 +477,32 @@ class BeepTests(DistributionFixture):
         self.assertContains(response, 'id="sound-toggle"')
         self.assertContains(response, "AudioContext")
         self.assertContains(response, "EXTRA_DELIVERED")
+
+
+class MobileCardsTests(DistributionFixture):
+    """Mobile usa cards (ul sm:hidden) e desktop mantém tabela (hidden sm:block)."""
+
+    def _urls(self):
+        pk = self.distribution.pk
+        return [
+            reverse("distributions:list"),
+            reverse("distributions:deliveries", args=[pk]),
+            reverse("distributions:pending", args=[pk]),
+            reverse("distributions:report", args=[pk]),
+        ]
+
+    def test_telas_usam_cards_e_tabela(self):
+        self.client.force_login(self.operator)
+        for url in self._urls():
+            with self.subTest(url=url):
+                body = self.client.get(url).content.decode()
+                self.assertIn("sm:hidden", body)          # cards mobile
+                self.assertIn("hidden overflow-x-auto", body)  # tabela só desktop
+
+    def test_camera_nao_foca_o_campo(self):
+        self.client.force_login(self.operator)
+        body = self.client.get(
+            reverse("distributions:operation", args=[self.distribution.pk])
+        ).content.decode()
+        self.assertIn("focus: false", body)
+        self.assertIn("pointer: coarse", body)

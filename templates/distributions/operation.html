@@ -219,7 +219,12 @@
     // Classes de layout da confirmação (preservadas ao colorir).
     const FB_BASE = 'flex flex-1 flex-col justify-center rounded-xl border-2 p-3 text-left sm:p-4';
 
-    function focusInput() { input.focus(); }
+    function focusInput() {
+      // Não rouba o foco (nem abre o teclado) quando lendo pela câmera.
+      if (controls) return;
+      if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
+      input.focus();
+    }
 
     function setCameraVisible(on) {
       video.classList.toggle('hidden', !on);
@@ -262,7 +267,7 @@
       return { status: response.status, data: await response.json() };
     }
 
-    async function submitToken(token) {
+    async function submitToken(token, { focus = true } = {}) {
       lastToken = token;
       try {
         const { data } = await post(SCAN_URL, { token });
@@ -272,7 +277,7 @@
         paint('INVALID_TOKEN', { message: 'Falha de rede.' });
       }
       input.value = '';
-      focusInput();
+      if (focus) focusInput();
     }
 
     async function refreshTotals() {
@@ -335,7 +340,7 @@
       if (text === lastCode && now - lastAt < 2500) return; // debounce
       lastCode = text;
       lastAt = now;
-      submitToken(text);
+      submitToken(text, { focus: false }); // câmera não deve abrir o teclado
     }
 
     async function startCamera() {
