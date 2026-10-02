@@ -2,39 +2,54 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}IFMG Alimenta{% endblock %}</title>
   {# ADR-004: Tailwind via CDN no MVP; build standalone depois. #}
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Esconde o marcador nativo do <summary> (ícone do hambúrguer é próprio). */
+    summary.menu-toggle::-webkit-details-marker { display: none; }
+    summary.menu-toggle { list-style: none; }
+  </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-800">
-  <header class="bg-emerald-700 text-white shadow">
+  <header class="sticky top-0 z-30 bg-emerald-700 text-white shadow">
     <div class="mx-auto max-w-5xl px-4 py-3">
       <div class="flex items-center justify-between gap-2">
         <a href="{% url 'distributions:home' %}" class="text-lg font-semibold">IFMG Alimenta</a>
+
         {% if user.is_authenticated %}
-          <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button class="rounded bg-emerald-800 px-3 py-1 text-sm hover:bg-emerald-900">
-              Sair ({{ user.get_short_name }})
-            </button>
-          </form>
+          <div class="flex items-center gap-2">
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="rounded-full bg-emerald-800 px-3 py-1.5 text-sm hover:bg-emerald-900">
+                Sair
+              </button>
+            </form>
+
+            {# Hambúrguer: só no celular. Sem JS (details/summary). #}
+            <details id="nav-menu" class="relative sm:hidden">
+              <summary class="menu-toggle flex cursor-pointer items-center rounded-lg border border-white/30 p-2 hover:bg-emerald-800"
+                       aria-label="Menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </summary>
+              <div class="absolute right-0 z-40 mt-2 w-56 rounded-2xl bg-emerald-700 p-2 text-sm shadow-xl ring-1 ring-emerald-900/40">
+                <nav class="flex flex-col gap-1">
+                  {% include "_nav_links.html" with link_class="block rounded-lg px-3 py-2 hover:bg-emerald-800" active_class="bg-emerald-800 font-semibold" %}
+                </nav>
+              </div>
+            </details>
+          </div>
         {% endif %}
       </div>
+
       {% if user.is_authenticated %}
-        <nav class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          {% if user.is_superuser or user.role == 'ADMIN' or user.role == 'OPERATOR' %}
-            <a href="{% url 'distributions:list' %}" class="hover:underline">Distribuições</a>
-            <a href="{% url 'menus:list' %}" class="hover:underline">Cardápios</a>
-          {% endif %}
-          {% if user.is_superuser or user.role == 'ADMIN' or user.role == 'MANAGER' %}
-            <a href="{% url 'audit:list' %}" class="hover:underline">Auditoria</a>
-          {% endif %}
-          {% if user.is_superuser or user.role == 'ADMIN' %}
-            <a href="{% url 'students_pages:import-page' %}" class="hover:underline">Importar</a>
-            <a href="{% url 'students_pages:qr-page' %}" class="hover:underline">QR Codes</a>
-            <a href="/admin/" class="hover:underline">Admin</a>
-          {% endif %}
+        <nav class="mt-2 hidden flex-wrap items-center gap-x-4 gap-y-1 text-sm sm:flex">
+          {% include "_nav_links.html" with link_class="hover:underline" active_class="font-semibold underline" %}
         </nav>
       {% endif %}
     </div>

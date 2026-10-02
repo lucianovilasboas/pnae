@@ -1,0 +1,20 @@
+{% with path=request.path %}
+{% if user.is_superuser or user.role == 'ADMIN' or user.role == 'OPERATOR' %}
+  <a href="{% url 'distributions:list' %}"
+     class="{{ link_class }}{% if '/distribuicoes/' in path %} {{ active_class }}{% endif %}">Distribuições</a>
+  <a href="{% url 'menus:list' %}"
+     class="{{ link_class }}{% if '/cardapios/' in path %} {{ active_class }}{% endif %}">Cardápios</a>
+{% endif %}
+{% if user.is_superuser or user.role == 'ADMIN' or user.role == 'MANAGER' %}
+  <a href="{% url 'audit:list' %}"
+     class="{{ link_class }}{% if '/auditoria/' in path %} {{ active_class }}{% endif %}">Auditoria</a>
+{% endif %}
+{% if user.is_superuser or user.role == 'ADMIN' %}
+  <a href="{% url 'students_pages:import-page' %}"
+     class="{{ link_class }}{% if '/estudantes/importar/' in path %} {{ active_class }}{% endif %}">Importar</a>
+  <a href="{% url 'students_pages:qr-page' %}"
+     class="{{ link_class }}{% if '/estudantes/qr/' in path %} {{ active_class }}{% endif %}">QR Codes</a>
+  <a href="/admin/"
+     class="{{ link_class }}{% if '/admin/' in path %} {{ active_class }}{% endif %}">Admin</a>
+{% endif %}
+{% endwith %}

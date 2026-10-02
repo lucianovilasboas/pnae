@@ -448,3 +448,21 @@ class OperationCameraTests(DistributionFixture):
         from django.contrib.staticfiles import finders
 
         self.assertIsNotNone(finders.find("vendor/zxing/zxing-browser.min.js"))
+
+
+class MobileUiTests(DistributionFixture):
+    def test_cabecalho_tem_menu_hamburguer(self):
+        self.client.force_login(self.operator)
+        response = self.client.get(reverse("distributions:home"))
+        self.assertContains(response, 'id="nav-menu"')
+        self.assertContains(response, "menu-toggle")
+        self.assertContains(response, "Cardápios")
+
+    def test_operacao_tem_placeholder_e_icone(self):
+        self.client.force_login(self.operator)
+        response = self.client.get(
+            reverse("distributions:operation", args=[self.distribution.pk])
+        )
+        self.assertContains(response, 'id="cam-placeholder"')
+        self.assertContains(response, 'id="feedback-icon"')
+        self.assertContains(response, "vendor/zxing/zxing-browser.min.js")
