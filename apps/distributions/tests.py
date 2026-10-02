@@ -434,3 +434,17 @@ class PilotDrillTests(TestCase):
             Delivery.objects.filter(distribution=distribution, delivery_type=DeliveryType.REGULAR).count(),
             55,
         )
+
+
+class OperationCameraTests(DistributionFixture):
+    def test_pagina_operacao_traz_camera_zxing(self):
+        self.client.force_login(self.operator)
+        response = self.client.get(reverse("distributions:operation", args=[self.distribution.pk]))
+        self.assertContains(response, "vendor/zxing/zxing-browser.min.js")
+        self.assertContains(response, 'id="cam-toggle"')
+        self.assertContains(response, 'id="cam-switch"')
+
+    def test_arquivo_zxing_esta_disponivel(self):
+        from django.contrib.staticfiles import finders
+
+        self.assertIsNotNone(finders.find("vendor/zxing/zxing-browser.min.js"))

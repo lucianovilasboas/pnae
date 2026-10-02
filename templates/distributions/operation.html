@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Operação — IFMG Alimenta{% endblock %}
 
 {% block content %}
@@ -35,9 +36,12 @@
            placeholder="Token do QR (scanner USB) + Enter"
            class="flex-1 rounded border border-slate-300 p-3 text-lg">
     <button id="cam-toggle" type="button" hidden
-            class="rounded bg-slate-700 px-4 py-2 text-white">Câmera</button>
+            class="rounded bg-slate-700 px-4 py-2 text-white">Usar câmera</button>
+    <button id="cam-switch" type="button" hidden
+            class="rounded border border-slate-300 px-4 py-2">Virar câmera</button>
   </div>
-  <video id="video" class="mb-6 hidden w-full max-w-sm rounded" playsinline></video>
+  <p id="cam-hint" class="mb-4 hidden text-sm text-slate-500"></p>
+  <video id="video" class="mb-6 hidden w-full max-w-sm rounded" playsinline muted></video>
 
   <section class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
     <div class="rounded bg-white p-3 text-center shadow">
@@ -68,6 +72,7 @@
             class="rounded bg-amber-700 px-4 py-2 text-white">Registrar excedente</button>
   </div>
 
+  <script src="{% static 'vendor/zxing/zxing-browser.min.js' %}"></script>
   <script>
     const CSRF = "{{ csrf_token }}";
     const SCAN_URL = "{% url 'distributions_api:scan' distribution.pk %}";
@@ -158,35 +163,70 @@
       refreshTotals();
     });
 
-    // Câmera: usa a API nativa BarcodeDetector quando disponível.
-    if ('BarcodeDetector' in window) {
-      const camBtn = document.getElementById('cam-toggle');
-      const video = document.getElementById('video');
-      camBtn.hidden = false;
-      let stream = null;
-      let timer = null;
-      camBtn.addEventListener('click', async () => {
-        if (stream) {
-          clearInterval(timer);
-          stream.getTracks().forEach((t) => t.stop());
-          stream = null;
-          video.classList.add('hidden');
-          camBtn.textContent = 'Câmera';
-          return;
-        }
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        video.srcObject = stream;
+    // Câmera: ZXing (QR Code + códigos de barras 1D), funciona em iOS/Android.
+    // Exige HTTPS (ou localhost) para o navegador liberar a câmera.
+    const camBtn = document.getElementById('cam-toggle');
+    const camSwitchBtn = document.getElementById('cam-switch');
+    const camHint = document.getElementById('cam-hint');
+    const video = document.getElementById('video');
+    let reader = null;
+    let controls = null;
+    let facing = 'environment';
+    let lastCode = '';
+    let lastAt = 0;
+
+    function camSupported() {
+      return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.ZXingBrowser);
+    }
+
+    function showHint(text) {
+      camHint.textContent = text || '';
+      camHint.classList.toggle('hidden', !text);
+    }
+
+    function onCameraResult(result) {
+      if (!result) return;
+      const text = result.getText ? result.getText() : String(result);
+      if (!text) return;
+      const now = Date.now();
+      if (text === lastCode && now - lastAt < 2500) return; // debounce
+      lastCode = text;
+      lastAt = now;
+      submitToken(text);
+    }
+
+    async function startCamera() {
+      reader = reader || new window.ZXingBrowser.BrowserMultiFormatReader();
+      try {
+        controls = await reader.decodeFromConstraints(
+          { video: { facingMode: { ideal: facing } } }, video, onCameraResult
+        );
         video.classList.remove('hidden');
-        await video.play();
+        camSwitchBtn.hidden = false;
         camBtn.textContent = 'Parar câmera';
-        const detector = new BarcodeDetector({ formats: ['qr_code'] });
-        timer = setInterval(async () => {
-          const codes = await detector.detect(video);
-          if (codes.length) {
-            submitToken(codes[0].rawValue);
-          }
-        }, 500);
+        showHint('');
+      } catch (e) {
+        showHint('Não foi possível abrir a câmera. Use HTTPS, permita o acesso ou use o leitor USB.');
+      }
+    }
+
+    function stopCamera() {
+      if (controls) { controls.stop(); controls = null; }
+      video.classList.add('hidden');
+      camSwitchBtn.hidden = true;
+      camBtn.textContent = 'Usar câmera';
+      focusInput();
+    }
+
+    if (camSupported()) {
+      camBtn.hidden = false;
+      camBtn.addEventListener('click', () => { controls ? stopCamera() : startCamera(); });
+      camSwitchBtn.addEventListener('click', () => {
+        facing = facing === 'environment' ? 'user' : 'environment';
+        if (controls) { controls.stop(); controls = null; startCamera(); }
       });
+    } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      showHint('Para ler com a câmera, acesse por HTTPS. O leitor USB continua funcionando.');
     }
 
     focusInput();

@@ -20,13 +20,20 @@ ponto de atendimento.
 
 6. Clique em **Operar**. O cursor já fica no campo de leitura.
 7. O aluno apresenta o **QR Code**:
-   - **Scanner USB**: aponte e dispare — o código entra sozinho.
-   - **Câmera**: toque em **Câmera** e aponte para o QR.
+   - **Scanner USB**: aponte e dispare — o código entra sozinho no campo.
+   - **Câmera**: toque em **Usar câmera** e aponte para o QR. Use **Virar
+     câmera** para trocar entre traseira/frontal. Para tocar em **Parar
+     câmera** ao terminar.
 8. Leia a cor da tela:
    - 🟢 **Verde — Entregue**: registrado. Pode chamar o próximo.
    - 🔴 **Vermelho — Já entregue**: este aluno já recebeu nesta sessão.
    - 🟡 **Amarelo — QR inválido/inelegível**: QR de outro campus, inativo ou
      danificado.
+
+> **Câmera de celular**: funciona em iPhone (Safari) e Android (Chrome),
+> inclusive para **código de barras** além do QR. O navegador só libera a
+> câmera em **HTTPS**; se aparecer aviso, use o leitor USB. O leitor USB é o
+> caminho principal.
 
 ## Casos especiais
 

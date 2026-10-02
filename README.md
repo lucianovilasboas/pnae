@@ -22,7 +22,9 @@ autorização e motivo.
 
 Runbook em [`docs/08-operacao.md`](docs/08-operacao.md): backup
 (`./scripts/backup_db.sh`), restauração (`./scripts/restore_db.sh`), ensaio
-(`python manage.py pilot_drill --campus PN --students 60`) e deploy.
+(`python manage.py pilot_drill --campus PN --students 60`) e deploy. Leitura na
+operação por **scanner USB** (teclado) ou **câmera do celular** (QR Code e
+códigos de barras 1D via ZXing; a câmera requer HTTPS).
 
 ## Telas principais
 

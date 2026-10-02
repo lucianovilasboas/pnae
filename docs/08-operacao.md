@@ -68,6 +68,26 @@ turmas e faz upsert por matrícula (idempotente).
 3. `docker exec pnae_app python manage.py createsuperuser`.
 4. Conferir o domínio/HTTPS nos labels do Traefik (`docker-compose.yml`).
 
+## 6.1 Leitura por câmera do celular (HTTPS obrigatório)
+
+O navegador só libera a câmera em **HTTPS** (ou `localhost`). Para testar no
+celular sem domínio próprio, use o Tailscale:
+
+```bash
+tailscale serve --bg --https=8443 8601      # publica o app em https://<máquina>.<tailnet>.ts.net:8443
+```
+
+Depois, no `.env`, inclua o host e a origem e recrie o container:
+
+```
+ALLOWED_HOSTS=...,<máquina>.<tailnet>.ts.net
+CSRF_TRUSTED_ORIGINS=...,https://<máquina>.<tailnet>.ts.net:8443
+```
+
+A leitura por câmera usa **ZXing** (QR Code + códigos de barras 1D) e funciona
+em iOS/Safari e Android/Chrome. Ver `static/vendor/zxing/README.txt`.
+
+
 ## 7. Contingência (internet/energia no ponto)
 
 - Internet indisponível: registrar em papel (matrícula + hora) e reconciliar no
