@@ -13,7 +13,7 @@ from apps.accounts.decorators import is_admin
 from apps.campus.models import ClassGroup
 from apps.campus.selectors import resolve_campus
 
-from .importers import RosterFormatError
+from .importers import RosterFormatError, missing_group_names
 from .models import ImportJob, ImportJobStatus
 from .services import apply_import, create_import_preview
 
@@ -53,6 +53,7 @@ def import_page(request):
                         "valid": valid[:50],
                         "valid_total": len(valid),
                         "errors": errors[:100],
+                        "new_groups": missing_group_names(campus, valid),
                     },
                 )
         return render(request, "students/import.html")

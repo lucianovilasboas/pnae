@@ -19,6 +19,13 @@
     </div>
   </div>
 
+  {% if new_groups %}
+    <div class="mb-4 rounded border border-sky-300 bg-sky-50 p-3 text-sm text-sky-800">
+      Serão criadas {{ new_groups|length }} turma(s) ao confirmar:
+      {{ new_groups|join:", " }}.
+    </div>
+  {% endif %}
+
   {% if errors %}
     <section class="mb-6 rounded-lg bg-white p-4 shadow">
       <h2 class="mb-2 font-semibold text-red-700">Linhas rejeitadas ({{ job.rejected_rows }})</h2>

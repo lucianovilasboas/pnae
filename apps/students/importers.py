@@ -20,9 +20,15 @@ COLUMN_ALIASES = {
     "full_name": {"nome", "nome completo", "full_name", "name"},
     "email": {"email", "e-mail"},
     "class_group": {"turma", "class_group", "classe", "grupo"},
+    "course": {"curso", "descricao do curso", "course"},
+    "active": {"situacao no curso", "situacao", "status", "situacao do aluno"},
 }
 
 REQUIRED_FIELDS = ("registration_number", "full_name")
+
+# Situações que mantêm o estudante ativo. Qualquer outra situação preenchida
+# resulta em estudante inativo.
+ACTIVE_STATUSES = {"matriculado", "ativo", "cursando", "regularmente matriculado"}
 
 
 @dataclass
@@ -32,6 +38,9 @@ class ParsedRow:
     full_name: str
     email: str
     class_group: ClassGroup | None = None
+    class_group_name: str = ""
+    course: str = ""
+    active: bool = True
 
 
 @dataclass
@@ -100,8 +109,18 @@ def read_table(file_obj, filename: str) -> list[list]:
     raise RosterFormatError("Formato não suportado. Envie CSV ou XLSX.")
 
 
-def parse_roster(file_obj, filename: str, campus) -> tuple[list[ParsedRow], list[RowError], int]:
-    """Devolve (linhas válidas, erros por linha, total de linhas de dados)."""
+def parse_roster(
+    file_obj,
+    filename: str,
+    campus,
+    create_missing_groups: bool = True,
+) -> tuple[list[ParsedRow], list[RowError], int]:
+    """Devolve (linhas válidas, erros por linha, total de linhas de dados).
+
+    Com `create_missing_groups=True`, uma turma informada que ainda não existe
+    no campus é aceita (será criada na aplicação), carregando o nome da turma e
+    o curso para criação. Caso contrário, é tratada como erro.
+    """
     rows = read_table(file_obj, filename)
     if not rows:
         raise RosterFormatError("Arquivo vazio.")
@@ -125,6 +144,8 @@ def parse_roster(file_obj, filename: str, campus) -> tuple[list[ParsedRow], list
         full_name = cell("full_name")
         email = cell("email")
         group_name = cell("class_group")
+        course = cell("course")
+        status = cell("active")
 
         if not registration and not full_name:
             continue  # linha em branco
@@ -140,14 +161,16 @@ def parse_roster(file_obj, filename: str, campus) -> tuple[list[ParsedRow], list
             errors.append(RowError(line_number, registration, "Matrícula repetida no arquivo."))
             continue
 
-        class_group = None
-        if group_name:
-            class_group = groups.get(_normalize(group_name))
-            if class_group is None:
-                errors.append(
-                    RowError(line_number, registration, f"Turma não encontrada: {group_name}.")
-                )
-                continue
+        class_group = groups.get(_normalize(group_name)) if group_name else None
+        if group_name and class_group is None and not create_missing_groups:
+            errors.append(
+                RowError(line_number, registration, f"Turma não encontrada: {group_name}.")
+            )
+            continue
+
+        active = True
+        if status:
+            active = _normalize(status) in ACTIVE_STATUSES
 
         valid.append(
             ParsedRow(
@@ -156,8 +179,22 @@ def parse_roster(file_obj, filename: str, campus) -> tuple[list[ParsedRow], list
                 full_name=full_name,
                 email=email,
                 class_group=class_group,
+                class_group_name=group_name,
+                course=course,
+                active=active,
             )
         )
         seen_registrations.add(registration)
 
     return valid, errors, total
+
+
+def missing_group_names(campus, rows) -> list[str]:
+    """Nomes de turmas que ainda não existem no campus (serão criadas)."""
+    names = {row.class_group_name for row in rows if row.class_group_name and row.class_group is None}
+    if not names:
+        return []
+    existing = set(
+        ClassGroup.objects.filter(campus=campus, name__in=names).values_list("name", flat=True)
+    )
+    return sorted(names - existing)

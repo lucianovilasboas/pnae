@@ -1,4 +1,9 @@
 from django.db import models
+from django.utils import timezone
+
+
+def _current_year():
+    return timezone.localdate().year
 
 
 class ImportJobStatus(models.TextChoices):
@@ -55,6 +60,7 @@ class ImportJob(models.Model):
         "accounts.User", on_delete=models.PROTECT, related_name="import_jobs", verbose_name="autor"
     )
     created_at = models.DateTimeField("criado em", auto_now_add=True)
+    academic_year = models.PositiveIntegerField("ano letivo", default=_current_year)
     status = models.CharField(
         "situação", max_length=20, choices=ImportJobStatus.choices, default=ImportJobStatus.PENDING
     )

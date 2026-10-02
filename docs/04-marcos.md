@@ -55,6 +55,12 @@ Sem código. Destrava o backend.
 > CSV/XLSX com prévia/aplicação em duas fases, folha de impressão de QR com
 > rotação explícita de token, endpoints JSON e páginas para administrador.
 > Rotação de token invalida QRs antigos por decisão (ADR-002).
+>
+> Carga real (Ponte Nova, 309 alunos) na branch `feat/roster-import-real`:
+> o importer passou a criar turmas faltantes a partir da coluna `Turma`
+> (nome = código, ex. `I1PNIINFO1`), mapear `Descrição do Curso → course` e
+> `Situação no Curso → active`, e há o comando `import_roster` (com
+> `--dry-run`).
 
 > Scaffold inicial entregue na branch `feat/scaffold-django`: modelos,
 > migrations (incl. índices únicos parciais), admin e 10 testes verdes

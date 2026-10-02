@@ -3,6 +3,7 @@ import io
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from openpyxl import Workbook
 
 from apps.accounts.models import User, UserRole
@@ -95,13 +96,54 @@ class ImportApiTests(BaseStudentApiTests):
         self.assertEqual(response["rejectedRows"], 1)
         self.assertIn("repetida", response["errors"][0]["reason"])
 
-    def test_turma_inexistente_e_rejeitada(self):
-        response = self.client.post(
+    def test_turma_nova_e_criada_no_apply(self):
+        preview = self.client.post(
             reverse("students:import-create"),
-            {"file": csv_file(["2026001;Ana Silva;Turma Fantasma;"])},
+            {"file": csv_file(["2026001;Ana Silva;I1PNIINFO1;ana@example.org"])},
         ).json()
-        self.assertEqual(response["validRows"], 0)
-        self.assertIn("Turma não encontrada", response["errors"][0]["reason"])
+        self.assertEqual(preview["validRows"], 1)
+        self.assertIn("I1PNIINFO1", preview["newGroups"])
+        # A prévia não cria a turma ainda.
+        self.assertFalse(ClassGroup.objects.filter(name="I1PNIINFO1").exists())
+
+        self.client.post(reverse("students:import-apply", args=[preview["id"]]))
+        group = ClassGroup.objects.get(name="I1PNIINFO1", campus=self.campus)
+        self.assertEqual(group.academic_year, timezone.localdate().year)
+        self.assertEqual(Student.objects.get(registration_number="2026001").class_group, group)
+
+    def test_curso_e_situacao_sao_mapeados(self):
+        header = "Matrícula;Nome;Turma;Descrição do Curso;Situação no Curso"
+        content = (
+            header
+            + "\n2026001;Ana Silva;I1PNIINFO1;Informática;Matriculado"
+            + "\n2026002;Bruno Souza;I1PNIINFO1;Informática;Evadido\n"
+        )
+        upload = SimpleUploadedFile("alunos.csv", content.encode("utf-8"), content_type="text/csv")
+        preview = self.client.post(reverse("students:import-create"), {"file": upload}).json()
+        self.assertEqual(preview["validRows"], 2)
+
+        self.client.post(reverse("students:import-apply", args=[preview["id"]]))
+        self.assertEqual(ClassGroup.objects.get(name="I1PNIINFO1").course, "Informática")
+        self.assertTrue(Student.objects.get(registration_number="2026001").active)
+        self.assertFalse(Student.objects.get(registration_number="2026002").active)
+
+    def test_reimportacao_idempotente(self):
+        first = self.client.post(
+            reverse("students:import-create"), {"file": csv_file(["2026001;Ana Silva;I1PNIINFO1;"])}
+        ).json()
+        self.client.post(reverse("students:import-apply", args=[first["id"]]))
+
+        second = self.client.post(
+            reverse("students:import-create"),
+            {"file": csv_file(["2026001;Ana Silva Atualizada;I1PNIINFO1;"])},
+        ).json()
+        self.client.post(reverse("students:import-apply", args=[second["id"]]))
+
+        self.assertEqual(Student.objects.filter(registration_number="2026001").count(), 1)
+        self.assertEqual(
+            Student.objects.get(registration_number="2026001").full_name, "Ana Silva Atualizada"
+        )
+        self.assertEqual(ClassGroup.objects.filter(name="I1PNIINFO1").count(), 1)
 
     def test_coluna_obrigatoria_ausente_retorna_400(self):
         response = self.client.post(

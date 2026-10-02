@@ -13,6 +13,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 
 from apps.audit.services import record_event
+from apps.campus.models import ClassGroup
 
 from .importers import parse_roster
 from .models import ImportJob, ImportJobStatus, Student
@@ -31,7 +32,7 @@ def _write_error_report(job: ImportJob, errors) -> str:
     return path
 
 
-def create_import_preview(*, campus, user, uploaded_file):
+def create_import_preview(*, campus, user, uploaded_file, academic_year=None):
     """Cria um ImportJob em PREVIEW. Não grava estudantes."""
     job = ImportJob.objects.create(
         campus=campus,
@@ -40,6 +41,8 @@ def create_import_preview(*, campus, user, uploaded_file):
         source_file=uploaded_file,
         status=ImportJobStatus.VALIDATING,
     )
+    if academic_year is not None:
+        job.academic_year = academic_year
 
     valid, errors, total = parse_roster(job.source_file, job.file_name, campus)
 
@@ -49,7 +52,13 @@ def create_import_preview(*, campus, user, uploaded_file):
     if errors:
         job.error_report_path = _write_error_report(job, errors)
     job.save(
-        update_fields=["total_rows", "rejected_rows", "status", "error_report_path"]
+        update_fields=[
+            "total_rows",
+            "rejected_rows",
+            "status",
+            "error_report_path",
+            "academic_year",
+        ]
     )
 
     record_event(
@@ -65,7 +74,7 @@ def create_import_preview(*, campus, user, uploaded_file):
 
 @transaction.atomic
 def apply_import(*, job: ImportJob, user):
-    """Aplica a prévia: upsert dos estudantes válidos. Idempotente por matrícula."""
+    """Aplica a prévia: cria turmas faltantes e faz upsert dos estudantes."""
     if job.status != ImportJobStatus.PREVIEW:
         raise ValueError("Importação não está em prévia.")
 
@@ -73,15 +82,30 @@ def apply_import(*, job: ImportJob, user):
     valid, _errors, _total = parse_roster(job.source_file, job.file_name, job.campus)
 
     imported = 0
+    groups_created = 0
     for row in valid:
+        group = row.class_group
+        if group is None and row.class_group_name:
+            group, created = ClassGroup.objects.get_or_create(
+                campus=job.campus,
+                name=row.class_group_name,
+                academic_year=job.academic_year,
+                defaults={"course": row.course},
+            )
+            if created:
+                groups_created += 1
+            elif row.course and not group.course:
+                group.course = row.course
+                group.save(update_fields=["course"])
+
         Student.objects.update_or_create(
             campus=job.campus,
             registration_number=row.registration_number,
             defaults={
                 "full_name": row.full_name,
                 "email": row.email or "",
-                "class_group": row.class_group,
-                "active": True,
+                "class_group": group,
+                "active": row.active,
             },
         )
         imported += 1
@@ -96,6 +120,10 @@ def apply_import(*, job: ImportJob, user):
         entity_id=job.pk,
         actor=user,
         campus=job.campus,
-        metadata={"imported": imported, "rejected": job.rejected_rows},
+        metadata={
+            "imported": imported,
+            "rejected": job.rejected_rows,
+            "groupsCreated": groups_created,
+        },
     )
     return job

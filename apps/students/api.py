@@ -17,7 +17,7 @@ from apps.audit.services import record_event
 from apps.campus.models import ClassGroup
 from apps.campus.selectors import resolve_campus
 
-from .importers import RosterFormatError
+from .importers import RosterFormatError, missing_group_names
 from .models import ImportJob, ImportJobStatus
 from .qr import assign_tokens, qr_data_uri, students_for_qr
 from .services import apply_import, create_import_preview
@@ -50,6 +50,7 @@ def _serialize_preview(job, valid, errors):
         "totalRows": job.total_rows,
         "validRows": len(valid),
         "rejectedRows": job.rejected_rows,
+        "newGroups": missing_group_names(job.campus, valid),
         "sample": [
             {
                 "line": row.line,
