@@ -18,6 +18,7 @@
 #   - .env de produção preenchido (ver .env.example / docs/10-deploy-ovm1.md).
 # =====================================================================
 set -euo pipefail
+export LC_ALL=C   # ordenação determinística (host x contêiner)
 
 SKIP_BUILD=0
 WAIT=1
@@ -43,6 +44,17 @@ DOMAIN="pnae.lucianovilasboas.com.br"
 
 erro() { echo "ERRO: $*" >&2; exit 1; }
 ok()   { echo "ok: $*"; }
+
+# Assinatura do código (Python + templates) para detectar imagem desatualizada.
+code_signature_host() {
+    ( cd "$ROOT" && find apps config templates -type f \( -name '*.py' -o -name '*.html' \) \
+        -not -path '*/__pycache__/*' -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+}
+code_signature_container() {
+    docker exec pnae_app bash -lc \
+        "export LC_ALL=C; cd /pnae_app && find apps config templates -type f \( -name '*.py' -o -name '*.html' \) -not -path '*/__pycache__/*' -print0 | sort -z | xargs -0 sha256sum | sha256sum" \
+        2>/dev/null | cut -d' ' -f1
+}
 
 # ---------------------------------------------------------------------
 # 1. Pré-checagens
@@ -132,7 +144,22 @@ if [ "$WAIT" = "1" ]; then
 fi
 
 # ---------------------------------------------------------------------
-# 5. Resumo
+# 5. Checar se o código do contêiner confere com o repositório
+# ---------------------------------------------------------------------
+if docker inspect -f '{{.State.Running}}' pnae_app 2>/dev/null | grep -q true; then
+    HOST_SIG="$(code_signature_host)"
+    CONT_SIG="$(code_signature_container)"
+    if [ -n "$HOST_SIG" ] && [ "$HOST_SIG" != "$CONT_SIG" ]; then
+        echo "AVISO: o código dentro do contêiner NÃO confere com o repositório"
+        echo "       (imagem desatualizada — provavelmente faltou o --build)."
+        echo "       Rode: docker compose up -d --build   (ou ./scripts/deploy.sh sem --skip-build)"
+    else
+        ok "código do contêiner confere com o repositório"
+    fi
+fi
+
+# ---------------------------------------------------------------------
+# 6. Resumo
 # ---------------------------------------------------------------------
 echo
 echo "== containers =="

@@ -176,9 +176,20 @@ Ensaio de leitura: `docker exec pnae_app python manage.py pilot_drill --campus P
 
 ## Atualizar depois (novo deploy)
 
+**Importante:** o código roda **dentro do contêiner** (embutido na imagem no
+build). Um `git pull` sozinho atualiza só os arquivos do host — **não** o app
+em execução. **Sempre** rode o `deploy.sh` (que faz `--build`) depois do pull.
+
 `git pull`
 
-`docker compose up -d --build`
+`./scripts/deploy.sh`
+
+> O `deploy.sh` compara a assinatura do código do repositório com a do
+> contêiner e avisa se a imagem estiver desatualizada.
+>
+> Sintoma de imagem velha: o app se comporta como a versão antiga (ex.: erro
+> `Model instances passed to related filters must be saved` na importação,
+> já corrigido). A solução é `./scripts/deploy.sh` (rebuild).
 
 ## PWA / instalação
 
