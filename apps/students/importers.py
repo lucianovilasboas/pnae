@@ -157,7 +157,14 @@ def parse_roster(
         raise RosterFormatError("Arquivo vazio.")
 
     mapping = _map_columns(rows[0])
-    groups = {_normalize(group.name): group for group in ClassGroup.objects.filter(campus=campus)}
+    # Em dry-run o campus pode ser transiente (sem pk); nesse caso não há
+    # turmas existentes a consultar.
+    if getattr(campus, "pk", None):
+        groups = {
+            _normalize(group.name): group for group in ClassGroup.objects.filter(campus=campus)
+        }
+    else:
+        groups = {}
 
     valid: list[ParsedRow] = []
     errors: list[RowError] = []
@@ -239,6 +246,8 @@ def missing_group_names(campus, rows) -> list[str]:
     names = {row.class_group_name for row in rows if row.class_group_name and row.class_group is None}
     if not names:
         return []
+    if not getattr(campus, "pk", None):
+        return sorted(names)  # campus novo (dry-run): todas serão criadas
     existing = set(
         ClassGroup.objects.filter(campus=campus, name__in=names).values_list("name", flat=True)
     )

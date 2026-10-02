@@ -66,11 +66,17 @@ Deixe exatamente estes valores (troque só os segredos e a senha):
 
 ### A6. Importar os estudantes (opcional agora)
 
-`./scripts/importar_alunos.sh --user luciano.espiridiao@ifmg.edu.br`
+`./scripts/importar_alunos.sh --user lucianovilasboas@gmail.com`
 
 Confira a prévia; para **gravar**, repita com `--apply`:
 
-`./scripts/importar_alunos.sh --user luciano.espiridiao@ifmg.edu.br --apply`
+`./scripts/importar_alunos.sh --user lucianovilasboas@gmail.com --apply`
+
+> O script já usa por padrão `--campus PN` e
+> `--campus-name "IFMG - Campus Ponte Nova"`. O campus só é **criado** ao
+> aplicar (`--apply`); a prévia apenas valida. Se aparecer
+> `Campus 'PN' não existe`, é sinal de que faltou o `--campus-name` (já é o
+> default, mas confirme que você não passou `--campus` diferente).
 
 ---
 
@@ -114,11 +120,11 @@ Deve responder `{"status": "ok", "database": true}`.
 
 Prévia (não grava):
 
-`docker exec pnae_app python manage.py import_roster /pnae_app/alunos-ifmg-pn-matricula-mapeada.xlsx --campus PN --campus-name "IFMG — Campus Ponte Nova" --academic-year 2026 --user luciano.espiridiao@ifmg.edu.br --dry-run`
+`docker exec pnae_app python manage.py import_roster /pnae_app/alunos-ifmg-pn-matricula-mapeada.xlsx --campus PN --campus-name "IFMG - Campus Ponte Nova" --academic-year 2026 --user luciano.espiridiao@ifmg.edu.br --dry-run`
 
 Aplicar:
 
-`docker exec pnae_app python manage.py import_roster /pnae_app/alunos-ifmg-pn-matricula-mapeada.xlsx --campus PN --campus-name "IFMG — Campus Ponte Nova" --academic-year 2026 --user luciano.espiridiao@ifmg.edu.br`
+`docker exec pnae_app python manage.py import_roster /pnae_app/alunos-ifmg-pn-matricula-mapeada.xlsx --campus PN --campus-name "IFMG - Campus Ponte Nova" --academic-year 2026 --user luciano.espiridiao@ifmg.edu.br`
 
 ---
 

@@ -17,7 +17,7 @@ cd "$ROOT"
 
 FILE="alunos-ifmg-pn-matricula-mapeada.xlsx"
 CAMPUS="PN"
-CAMPUS_NAME=""
+CAMPUS_NAME="IFMG - Campus Ponte Nova"
 YEAR="$(date +%Y)"
 USER_EMAIL=""
 APPLY=0
@@ -33,6 +33,7 @@ while [ $# -gt 0 ]; do
         --apply)         APPLY=1; shift ;;
         -h|--help)
             echo "uso: $0 --user EMAIL [--apply] [--file ARQ] [--campus PN] [--campus-name NOME] [--academic-year 2026]"
+            echo "defaults: --campus PN, --campus-name \"IFMG - Campus Ponte Nova\", --academic-year $(date +%Y)"
             exit 0 ;;
         *) echo "argumento desconhecido: $1" >&2; exit 2 ;;
     esac
@@ -53,7 +54,9 @@ docker exec "$CONTAINER" test -f "$CONTAINER_FILE" \
 
 ARGS=(python manage.py import_roster "$CONTAINER_FILE"
       --campus "$CAMPUS" --academic-year "$YEAR" --user "$USER_EMAIL" --dry-run)
-[ -n "$CAMPUS_NAME" ] && ARGS+=(--campus-name "$CAMPUS_NAME")
+if [ -n "$CAMPUS_NAME" ]; then
+    ARGS+=(--campus-name "$CAMPUS_NAME")
+fi
 
 echo "-> PRÉVIA (não grava)"
 docker exec "$CONTAINER" "${ARGS[@]}"
@@ -61,7 +64,7 @@ docker exec "$CONTAINER" "${ARGS[@]}"
 if [ "$APPLY" != "1" ]; then
     echo
     echo "Prévia concluída. Para gravar, rode de novo com --apply:"
-    echo "  $0 --user $USER_EMAIL --apply --campus $CAMPUS --academic-year $YEAR"
+    echo "  $0 --user $USER_EMAIL --apply --campus $CAMPUS --campus-name \"$CAMPUS_NAME\" --academic-year $YEAR"
     exit 0
 fi
 

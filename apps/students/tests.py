@@ -272,3 +272,18 @@ class StudentPagesTests(BaseStudentApiTests):
         response = self.client.get(reverse("students_pages:qr-page"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Exportar QR Codes")
+
+
+class DryRunNewCampusTests(TestCase):
+    """Dry-run com campus ainda inexistente (transiente, sem pk) não deve quebrar."""
+
+    def test_parse_roster_com_campus_novo(self):
+        from apps.students.importers import missing_group_names, parse_roster
+
+        campus = Campus(code="NEW", name="Campus Novo")  # não salvo (sem pk)
+        upload = csv_file(["2026001;Ana Silva;I1PNIINFO1;"])
+        valid, errors, total = parse_roster(upload, "alunos.csv", campus)
+        self.assertEqual(total, 1)
+        self.assertEqual(len(valid), 1)
+        self.assertEqual(errors, [])
+        self.assertIn("I1PNIINFO1", missing_group_names(campus, valid))
