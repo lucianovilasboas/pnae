@@ -147,16 +147,20 @@ def import_errors(request, pk):
 
 _QR_SHEET = """<!DOCTYPE html>
 <html lang="pt-br"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR Codes — IFMG Alimenta</title>
 <style>
   body {{ font-family: sans-serif; margin: 12px; }}
-  .grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }}
+  .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }}
   .card {{ border: 1px solid #ccc; border-radius: 6px; padding: 8px; text-align: center;
            break-inside: avoid; }}
   .name {{ font-weight: bold; font-size: 13px; }}
   .meta {{ font-size: 11px; color: #444; }}
   img {{ width: 120px; height: 120px; }}
-  @media print {{ .no-print {{ display: none; }} }}
+  @media print {{
+    .no-print {{ display: none; }}
+    .grid {{ grid-template-columns: repeat(3, 1fr); }}
+  }}
 </style></head><body>
 <div class="no-print">
   <p>Atenção: esta exportação <strong>rotaciona</strong> os tokens dos {count} estudantes

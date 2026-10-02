@@ -24,17 +24,17 @@
     <button class="rounded bg-slate-700 px-4 py-2 text-white">Filtrar</button>
   </form>
 
-  <div class="overflow-hidden rounded-lg bg-white shadow">
+  <div class="overflow-x-auto rounded-lg bg-white shadow">
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-left text-slate-500">
-        <tr><th class="p-3">Matrícula</th><th>Nome</th><th>Turma</th></tr>
+        <tr><th class="whitespace-nowrap p-3">Matrícula</th><th class="whitespace-nowrap">Nome</th><th class="whitespace-nowrap">Turma</th></tr>
       </thead>
       <tbody>
         {% for student in students %}
           <tr class="border-t">
-            <td class="p-3">{{ student.registration_number }}</td>
+            <td class="whitespace-nowrap p-3">{{ student.registration_number }}</td>
             <td>{{ student.full_name }}</td>
-            <td>{{ student.class_group.name|default:"—" }}</td>
+            <td class="whitespace-nowrap">{{ student.class_group.name|default:"—" }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="3" class="p-4 text-center text-slate-500">Ninguém pendente.</td></tr>

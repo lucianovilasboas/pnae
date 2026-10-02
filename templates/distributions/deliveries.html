@@ -20,29 +20,33 @@
     </div>
   </div>
 
-  <div class="overflow-hidden rounded-lg bg-white shadow">
+  <div class="overflow-x-auto rounded-lg bg-white shadow">
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-left text-slate-500">
         <tr>
-          <th class="p-3">Hora</th><th>Estudante</th><th>Tipo</th><th>Situação</th><th></th>
+          <th class="whitespace-nowrap p-3">Hora</th>
+          <th class="whitespace-nowrap">Estudante</th>
+          <th class="whitespace-nowrap">Tipo</th>
+          <th class="whitespace-nowrap">Situação</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {% for delivery in deliveries %}
           <tr class="border-t {% if delivery.status == 'ESTORNADA' %}text-slate-400 line-through{% endif %}">
-            <td class="p-3">{{ delivery.delivered_at|date:"H:i" }}</td>
-            <td>{{ delivery.student.full_name }} ({{ delivery.student.registration_number }})</td>
-            <td>{{ delivery.get_delivery_type_display }}</td>
-            <td>{{ delivery.get_status_display }}</td>
+            <td class="whitespace-nowrap p-3">{{ delivery.delivered_at|date:"H:i" }}</td>
+            <td class="whitespace-nowrap">{{ delivery.student.full_name }} ({{ delivery.student.registration_number }})</td>
+            <td class="whitespace-nowrap">{{ delivery.get_delivery_type_display }}</td>
+            <td class="whitespace-nowrap">{{ delivery.get_status_display }}</td>
             <td class="p-3 text-right">
               {% if delivery.status == 'VALIDA' and can_reverse %}
-                <form method="post" class="inline-flex items-center gap-1">
+                <form method="post" class="flex flex-wrap items-center justify-end gap-1">
                   {% csrf_token %}
                   <input type="hidden" name="action" value="reverse">
                   <input type="hidden" name="delivery_id" value="{{ delivery.pk }}">
                   <input type="text" name="reason" placeholder="Motivo do estorno" required
-                         class="rounded border border-slate-300 p-1 text-xs">
-                  <button class="rounded border border-red-300 px-2 py-1 text-xs text-red-700">
+                         class="w-40 rounded border border-slate-300 p-1 text-xs">
+                  <button class="whitespace-nowrap rounded border border-red-300 px-2 py-1 text-xs text-red-700">
                     Estornar
                   </button>
                 </form>

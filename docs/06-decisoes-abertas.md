@@ -8,7 +8,7 @@ proposto** para não travar a implementação; confirmar antes do piloto.
 
 | # | Pergunta | Default proposto | Status |
 |---|---|---|---|
-| 1 | Campus e tipos de refeição do piloto | 1 campus, `meal_type=LUNCH` | ⏳ |
+| 1 | Campus e tipos de refeição do piloto | Ponte Nova (PN), `meal_type=SNACK` (lanche) | ✅ |
 | 2 | Fonte oficial de estudante/matrícula/turma/situação | planilha da secretaria (XLSX) | ⏳ |
 | 3 | Formatos reais de CSV/XLSX | aceitar ambos; mapear colunas na importação | ⏳ |
 | 4 | Quem autoriza excedente/estorno; login individual ou PIN | permissão individual + reautenticação por senha | ⏳ |

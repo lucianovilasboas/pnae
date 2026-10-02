@@ -10,7 +10,7 @@
         {{ distribution.campus.name }} ({{ distribution.get_status_display }})
       </p>
     </div>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap gap-2">
       <a href="{% url 'distributions:deliveries' distribution.pk %}"
          class="rounded border border-slate-300 px-3 py-1 text-sm">Entregas</a>
       <a href="{% url 'distributions:report' distribution.pk %}"
@@ -30,7 +30,7 @@
     <div id="feedback-detail" class="mt-1 text-slate-600">Escaneie o QR Code do estudante.</div>
   </div>
 
-  <div class="mb-6 flex gap-2">
+  <div class="mb-6 flex flex-col gap-2 sm:flex-row">
     <input id="scan" type="text" autofocus autocomplete="off"
            placeholder="Token do QR (scanner USB) + Enter"
            class="flex-1 rounded border border-slate-300 p-3 text-lg">

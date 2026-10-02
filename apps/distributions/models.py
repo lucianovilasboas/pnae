@@ -37,7 +37,9 @@ class Distribution(models.Model):
         blank=True,
     )
     service_date = models.DateField("data do serviço")
-    meal_type = models.CharField("refeição", max_length=20, choices=MealType.choices)
+    meal_type = models.CharField(
+        "refeição", max_length=20, choices=MealType.choices, default=MealType.SNACK
+    )
     planned_start_at = models.DateTimeField("início previsto")
     planned_end_at = models.DateTimeField("fim previsto")
     status = models.CharField(

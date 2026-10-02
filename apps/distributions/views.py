@@ -7,11 +7,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
 from apps.accounts.decorators import can_reverse, is_operator
 from apps.campus.models import ClassGroup
 from apps.campus.selectors import resolve_campus
+from apps.menus.models import MealType, Menu
 
 from . import services
 from .models import Delivery, Distribution, DistributionStatus
@@ -30,6 +32,13 @@ def _scoped_distributions(request):
     if campus is not None and not request.user.is_superuser:
         queryset = queryset.filter(campus=campus)
     return campus, queryset.select_related("campus", "menu")
+
+
+def _aware(value):
+    """Interpreta datetime local (naive) no fuso corrente (RN-10)."""
+    if value is not None and timezone.is_naive(value):
+        return timezone.make_aware(value, timezone.get_current_timezone())
+    return value
 
 
 @login_required
@@ -66,7 +75,14 @@ def distribution_list(request):
     return render(
         request,
         "distributions/list.html",
-        {"distributions": queryset.order_by("-service_date", "-id")[:50], "campus": campus},
+        {
+            "distributions": queryset.order_by("-service_date", "-id")[:50],
+            "campus": campus,
+            "menus": Menu.objects.filter(campus=campus).order_by("-service_date")[:30]
+            if campus
+            else Menu.objects.none(),
+            "meal_types": MealType.choices,
+        },
     )
 
 
@@ -75,9 +91,13 @@ def _handle_create(request, campus):
         messages.error(request, "Campus não definido.")
         return
     service_date = parse_date(request.POST.get("service_date", "") or "")
-    start = parse_datetime(request.POST.get("planned_start_at", "") or "")
-    end = parse_datetime(request.POST.get("planned_end_at", "") or "")
-    meal_type = request.POST.get("meal_type")
+    start = _aware(parse_datetime(request.POST.get("planned_start_at", "") or ""))
+    end = _aware(parse_datetime(request.POST.get("planned_end_at", "") or ""))
+    meal_type = request.POST.get("meal_type") or MealType.SNACK
+    menu = None
+    menu_id = request.POST.get("menu")
+    if menu_id:
+        menu = Menu.objects.filter(pk=menu_id, campus=campus).first()
     if not (service_date and start and end and meal_type):
         messages.error(request, "Preencha data, refeição, início e fim.")
         return
@@ -88,6 +108,7 @@ def _handle_create(request, campus):
         meal_type=meal_type,
         planned_start_at=start,
         planned_end_at=end,
+        menu=menu,
     )
     messages.success(request, "Distribuição criada (rascunho).")
 

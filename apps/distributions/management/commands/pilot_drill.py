@@ -8,6 +8,8 @@ Exemplo:
     python manage.py pilot_drill --campus PN --students 60
 """
 
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
@@ -53,8 +55,10 @@ class Command(BaseCommand):
         distribution = services.create_distribution(
             campus=campus,
             user=operator,
-            service_date=timezone.localdate(),
-            meal_type=MealType.OTHER,
+            # Data de ontem: evita colidir com uma sessão real aberta hoje
+            # (índice único de distribuição aberta por campus/data/refeição).
+            service_date=timezone.localdate() - timedelta(days=1),
+            meal_type=MealType.SNACK,
             planned_start_at=timezone.now(),
             planned_end_at=timezone.now(),
         )

@@ -11,6 +11,7 @@ import json
 from django.db import IntegrityError
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
@@ -40,6 +41,12 @@ def _payload(request) -> dict:
 
 def _campus(request):
     return resolve_campus(request.user, request)
+
+
+def _aware(value):
+    if value is not None and timezone.is_naive(value):
+        return timezone.make_aware(value, timezone.get_current_timezone())
+    return value
 
 
 def _distribution(request, pk) -> Distribution:
@@ -87,8 +94,8 @@ def distribution_create(request):
 
     data = _payload(request)
     service_date = parse_date(data.get("service_date", "") or "")
-    start = parse_datetime(data.get("planned_start_at", "") or "")
-    end = parse_datetime(data.get("planned_end_at", "") or "")
+    start = _aware(parse_datetime(data.get("planned_start_at", "") or ""))
+    end = _aware(parse_datetime(data.get("planned_end_at", "") or ""))
     meal_type = data.get("meal_type")
 
     if not (service_date and start and end and meal_type):

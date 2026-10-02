@@ -4,7 +4,7 @@
 {% block content %}
   <h1 class="mb-4 text-2xl font-bold">Distribuições</h1>
 
-  <form method="post" class="mb-6 rounded-lg bg-white p-5 shadow">
+  <form method="post" class="mb-6 rounded-lg bg-white p-4 shadow sm:p-5">
     {% csrf_token %}
     <input type="hidden" name="action" value="create">
     <h2 class="mb-3 font-semibold">Nova distribuição</h2>
@@ -14,10 +14,17 @@
       </label>
       <label class="text-sm">Refeição
         <select name="meal_type" class="mt-1 w-full rounded border border-slate-300 p-2">
-          <option value="LUNCH">Almoço</option>
-          <option value="DINNER">Jantar</option>
-          <option value="SNACK">Lanche</option>
-          <option value="OTHER">Outro</option>
+          {% for value, label in meal_types %}
+            <option value="{{ value }}" {% if value == 'SNACK' %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="text-sm sm:col-span-2">Cardápio (opcional)
+        <select name="menu" class="mt-1 w-full rounded border border-slate-300 p-2">
+          <option value="">Sem cardápio vinculado</option>
+          {% for menu in menus %}
+            <option value="{{ menu.pk }}">{{ menu.service_date }} — {{ menu.get_meal_type_display }}: {{ menu.description|truncatechars:40 }}</option>
+          {% endfor %}
         </select>
       </label>
       <label class="text-sm">Início previsto
@@ -28,25 +35,32 @@
       </label>
     </div>
     <button type="submit"
-            class="mt-4 rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">
+            class="mt-4 w-full rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 sm:w-auto">
       Criar rascunho
     </button>
+    <a href="{% url 'menus:list' %}" class="mt-2 block text-sm text-emerald-700 hover:underline sm:mt-0 sm:ml-3 sm:inline">
+      Cadastrar cardápio
+    </a>
   </form>
 
-  <div class="overflow-hidden rounded-lg bg-white shadow">
+  <div class="overflow-x-auto rounded-lg bg-white shadow">
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-left text-slate-500">
         <tr>
-          <th class="p-3">Data</th><th>Refeição</th><th>Campus</th><th>Situação</th><th></th>
+          <th class="whitespace-nowrap p-3">Data</th>
+          <th class="whitespace-nowrap">Refeição</th>
+          <th class="whitespace-nowrap">Campus</th>
+          <th class="whitespace-nowrap">Situação</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {% for distribution in distributions %}
-          <tr class="border-t">
-            <td class="p-3">{{ distribution.service_date }}</td>
-            <td>{{ distribution.get_meal_type_display }}</td>
-            <td>{{ distribution.campus.name }}</td>
-            <td>
+          <tr class="border-t align-top">
+            <td class="whitespace-nowrap p-3">{{ distribution.service_date }}</td>
+            <td class="whitespace-nowrap">{{ distribution.get_meal_type_display }}</td>
+            <td class="whitespace-nowrap">{{ distribution.campus.name }}</td>
+            <td class="whitespace-nowrap">
               <span class="rounded px-2 py-0.5 text-xs
                 {% if distribution.status == 'OPEN' %}bg-emerald-100 text-emerald-800
                 {% elif distribution.status == 'DRAFT' %}bg-slate-100 text-slate-700
@@ -54,37 +68,36 @@
                 {{ distribution.get_status_display }}
               </span>
             </td>
-            <td class="p-3 text-right">
-              {% if distribution.status == 'DRAFT' %}
-                <form method="post" class="inline">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="open">
-                  <input type="hidden" name="id" value="{{ distribution.pk }}">
-                  <button class="rounded bg-emerald-700 px-3 py-1 text-white">Abrir</button>
-                </form>
-              {% elif distribution.status == 'OPEN' %}
-                <a href="{% url 'distributions:operation' distribution.pk %}"
-                   class="rounded bg-emerald-700 px-3 py-1 text-white">Operar</a>
-                <a href="{% url 'distributions:pending' distribution.pk %}"
-                   class="rounded border border-slate-300 px-3 py-1">Pendentes</a>
-                <a href="{% url 'distributions:deliveries' distribution.pk %}"
-                   class="rounded border border-slate-300 px-3 py-1">Entregas</a>
-                <a href="{% url 'distributions:report' distribution.pk %}"
-                   class="rounded border border-slate-300 px-3 py-1">Relatório</a>
-                <form method="post" class="inline">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="close">
-                  <input type="hidden" name="id" value="{{ distribution.pk }}">
-                  <button class="rounded border border-slate-300 px-3 py-1">Encerrar</button>
-                </form>
-              {% else %}
-                <a href="{% url 'distributions:pending' distribution.pk %}"
-                   class="rounded border border-slate-300 px-3 py-1">Pendentes</a>
-                <a href="{% url 'distributions:deliveries' distribution.pk %}"
-                   class="rounded border border-slate-300 px-3 py-1">Entregas</a>
-                <a href="{% url 'distributions:report' distribution.pk %}"
-                   class="rounded border border-slate-300 px-3 py-1">Relatório</a>
-              {% endif %}
+            <td class="p-3">
+              <div class="flex flex-wrap justify-end gap-1">
+                {% if distribution.status == 'DRAFT' %}
+                  <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="open">
+                    <input type="hidden" name="id" value="{{ distribution.pk }}">
+                    <button class="whitespace-nowrap rounded bg-emerald-700 px-3 py-1 text-white">Abrir</button>
+                  </form>
+                {% else %}
+                  {% if distribution.status == 'OPEN' %}
+                    <a href="{% url 'distributions:operation' distribution.pk %}"
+                       class="whitespace-nowrap rounded bg-emerald-700 px-3 py-1 text-white">Operar</a>
+                  {% endif %}
+                  <a href="{% url 'distributions:pending' distribution.pk %}"
+                     class="whitespace-nowrap rounded border border-slate-300 px-3 py-1">Pendentes</a>
+                  <a href="{% url 'distributions:deliveries' distribution.pk %}"
+                     class="whitespace-nowrap rounded border border-slate-300 px-3 py-1">Entregas</a>
+                  <a href="{% url 'distributions:report' distribution.pk %}"
+                     class="whitespace-nowrap rounded border border-slate-300 px-3 py-1">Relatório</a>
+                  {% if distribution.status == 'OPEN' %}
+                    <form method="post" class="inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="close">
+                      <input type="hidden" name="id" value="{{ distribution.pk }}">
+                      <button class="whitespace-nowrap rounded border border-slate-300 px-3 py-1">Encerrar</button>
+                    </form>
+                  {% endif %}
+                {% endif %}
+              </div>
             </td>
           </tr>
         {% empty %}

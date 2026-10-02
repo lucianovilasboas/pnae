@@ -62,7 +62,7 @@ can_authorize_extras (bool), can_reverse_deliveries (bool), active
 
 ### Menu (`apps/menus`)
 ```text
-id, campus_id FK, service_date, meal_type ∈ {LUNCH, DINNER, SNACK, OTHER},
+id, campus_id FK, service_date, meal_type ∈ {SNACK, LUNCH, DINNER, OTHER} (padrão SNACK),
 description, notes, created_by FK(User), created_at
 index (campus_id, service_date, meal_type)
 ```

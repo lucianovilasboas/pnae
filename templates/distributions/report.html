@@ -2,7 +2,7 @@
 {% block title %}Relatório — IFMG Alimenta{% endblock %}
 
 {% block content %}
-  <div class="mb-4 flex items-center justify-between">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
     <div>
       <h1 class="text-2xl font-bold">Relatório diário</h1>
       <p class="text-sm text-slate-600">
@@ -10,7 +10,7 @@
         {{ distribution.campus.name }} ({{ distribution.get_status_display }})
       </p>
     </div>
-    <div class="no-print flex gap-2">
+    <div class="no-print flex flex-wrap gap-2">
       <a href="{% url 'distributions:report-csv' distribution.pk %}"
          class="rounded bg-emerald-700 px-3 py-1 text-sm text-white">Baixar CSV</a>
       <button onclick="window.print()" class="rounded border border-slate-300 px-3 py-1 text-sm">
@@ -44,7 +44,7 @@
     </div>
   </section>
 
-  <section class="mb-6 rounded-lg bg-white p-4 shadow">
+  <section class="mb-6 overflow-x-auto rounded-lg bg-white p-4 shadow">
     <h2 class="mb-2 font-semibold">Por turma</h2>
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left text-slate-500">
@@ -65,7 +65,7 @@
     </table>
   </section>
 
-  <section class="mb-6 rounded-lg bg-white p-4 shadow">
+  <section class="mb-6 overflow-x-auto rounded-lg bg-white p-4 shadow">
     <h2 class="mb-2 font-semibold">Excedentes ({{ extras|length }})</h2>
     <table class="w-full text-sm">
       <thead><tr class="border-b text-left text-slate-500">

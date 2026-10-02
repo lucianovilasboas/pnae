@@ -13,7 +13,9 @@ class Menu(models.Model):
         "campus.Campus", on_delete=models.PROTECT, related_name="menus", verbose_name="campus"
     )
     service_date = models.DateField("data do serviço")
-    meal_type = models.CharField("refeição", max_length=20, choices=MealType.choices)
+    meal_type = models.CharField(
+        "refeição", max_length=20, choices=MealType.choices, default=MealType.SNACK
+    )
     description = models.TextField("descrição")
     notes = models.TextField("observações", blank=True)
     created_by = models.ForeignKey(

@@ -39,20 +39,20 @@
     </div>
   </form>
 
-  <div class="overflow-hidden rounded-lg bg-white shadow">
+  <div class="overflow-x-auto rounded-lg bg-white shadow">
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-left text-slate-500">
         <tr>
-          <th class="p-3">Quando</th><th>Ação</th><th>Entidade</th><th>Autor</th><th>Metadados</th>
+          <th class="whitespace-nowrap p-3">Quando</th><th class="whitespace-nowrap">Ação</th><th class="whitespace-nowrap">Entidade</th><th class="whitespace-nowrap">Autor</th><th>Metadados</th>
         </tr>
       </thead>
       <tbody>
         {% for event in events %}
           <tr class="border-t">
-            <td class="p-3">{{ event.occurred_at|date:"d/m H:i:s" }}</td>
-            <td>{{ event.action }}</td>
-            <td>{{ event.entity_type }}#{{ event.entity_id }}</td>
-            <td>{{ event.actor|default:"—" }}</td>
+            <td class="whitespace-nowrap p-3">{{ event.occurred_at|date:"d/m H:i:s" }}</td>
+            <td class="whitespace-nowrap">{{ event.action }}</td>
+            <td class="whitespace-nowrap">{{ event.entity_type }}#{{ event.entity_id }}</td>
+            <td class="whitespace-nowrap">{{ event.actor|default:"—" }}</td>
             <td class="max-w-xs truncate text-xs text-slate-500">{{ event.metadata_json }}</td>
           </tr>
         {% empty %}

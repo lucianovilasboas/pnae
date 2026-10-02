@@ -424,7 +424,7 @@ class PilotDrillTests(TestCase):
             "--reversals",
             "2",
         )
-        distribution = Distribution.objects.get(campus=self.campus, meal_type="OTHER")
+        distribution = Distribution.objects.get(campus=self.campus, meal_type="SNACK")
         self.assertEqual(distribution.status, DistributionStatus.CLOSED)
         summary = services.distribution_summary(distribution)
         self.assertEqual(summary["regularValid"], 55 - 2)

@@ -51,3 +51,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# ---------- Artefatos do Playwright (MCP) ----------
+.playwright-mcp/

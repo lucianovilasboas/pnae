@@ -34,9 +34,13 @@ Runbook em [`docs/08-operacao.md`](docs/08-operacao.md): backup
 | Entregas (estorno) | `/distribuicoes/<id>/entregas/` |
 | Pendentes | `/distribuicoes/<id>/pendentes/` |
 | Relatório diário | `/distribuicoes/<id>/relatorio/` |
+| Cardápios | `/cardapios/` |
 | Importar estudantes | `/estudantes/importar/` |
 | QR Codes | `/estudantes/qr/` |
 | Auditoria | `/auditoria/` |
+
+Roteiro do operador (1 página) em
+[`docs/09-treinamento-operador.md`](docs/09-treinamento-operador.md).
 
 ## Como rodar (desenvolvimento)
 
