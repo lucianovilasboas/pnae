@@ -118,6 +118,56 @@ class BulkMenuTests(TestCase):
         self.assertEqual(again["skipped"], 5)
 
 
+class MenuPublishTests(TestCase):
+    def setUp(self):
+        self.campus = Campus.objects.create(name="Campus Teste", code="TST")
+        self.operator = User.objects.create_user(
+            email="op@example.org", password="x", name="Operador",
+            campus=self.campus, role=UserRole.OPERATOR,
+        )
+        self.menu = Menu.objects.create(
+            campus=self.campus, service_date=timezone.localdate(),
+            meal_type=MealType.SNACK, description="Lanche", created_by=self.operator,
+        )
+
+    def _post(self, action, menu=None):
+        return self.client.post(
+            reverse("menus:list"),
+            {"action": action, "id": (menu or self.menu).pk},
+        )
+
+    def test_publica_e_audita(self):
+        self.client.force_login(self.operator)
+        self.assertFalse(self.menu.published)
+        response = self._post("publish")
+        self.assertEqual(response.status_code, 302)
+        self.menu.refresh_from_db()
+        self.assertTrue(self.menu.published)
+        self.assertIsNotNone(self.menu.published_at)
+        self.assertEqual(self.menu.published_by, self.operator)
+        self.assertTrue(AuditEvent.objects.filter(action="menu.published").exists())
+
+    def test_despublica(self):
+        self.client.force_login(self.operator)
+        self._post("publish")
+        self._post("unpublish")
+        self.menu.refresh_from_db()
+        self.assertFalse(self.menu.published)
+        self.assertIsNone(self.menu.published_by)
+        self.assertTrue(AuditEvent.objects.filter(action="menu.unpublished").exists())
+
+    def test_nao_publica_cardapio_de_outro_campus(self):
+        other = Campus.objects.create(name="Campus Outro", code="OUT")
+        outro = Menu.objects.create(
+            campus=other, service_date=timezone.localdate(),
+            meal_type=MealType.SNACK, description="Outro", created_by=self.operator,
+        )
+        self.client.force_login(self.operator)
+        self._post("publish", menu=outro)
+        outro.refresh_from_db()
+        self.assertFalse(outro.published)
+
+
 class MenuEditDeleteTests(TestCase):
     def setUp(self):
         from datetime import timedelta

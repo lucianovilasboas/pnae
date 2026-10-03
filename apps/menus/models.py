@@ -21,6 +21,17 @@ class Menu(models.Model):
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.PROTECT, related_name="menus", verbose_name="autor"
     )
+    # Publicação para o portal do aluno (controle explícito do operador).
+    published = models.BooleanField("publicado para o aluno", default=False)
+    published_at = models.DateTimeField("publicado em", null=True, blank=True)
+    published_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        related_name="published_menus",
+        verbose_name="publicado por",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField("criado em", auto_now_add=True)
 
     class Meta:

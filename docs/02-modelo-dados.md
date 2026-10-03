@@ -209,6 +209,9 @@ Regras implementadas nas telas de Distribuições e Cardápios:
     auditado (`menu.updated`).
   - **Excluir**: bloqueado se houver **distribuição vinculada**; auditado
     (`menu.deleted`).
+  - **Publicar/despublicar**: controla a visibilidade no portal do aluno
+    (`published`, `published_at`, `published_by`); auditado
+    (`menu.published` / `menu.unpublished`).
 - **Estudante** (tela de Estudantes, administrador)
   - **Criar/Editar**: matrícula, nome, e-mail, curso, turma e situação `ativo`
     (`campus` vem do escopo do usuário). Auditado (`student.created` /

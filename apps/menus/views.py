@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from apps.accounts.decorators import is_operator
@@ -39,6 +40,32 @@ def menu_list(request):
                     messages.success(request, "Cardápio excluído.")
                 except MenuStateError as exc:
                     messages.error(request, str(exc))
+            return redirect("menus:list")
+
+        if action in {"publish", "unpublish"}:
+            menu = get_object_or_404(Menu, pk=request.POST.get("id"))
+            if campus is not None and menu.campus_id != campus.pk and not request.user.is_superuser:
+                messages.error(request, "Cardápio de outro campus.")
+            else:
+                publish = action == "publish"
+                menu.published = publish
+                menu.published_at = timezone.now() if publish else None
+                menu.published_by = request.user if publish else None
+                menu.save(update_fields=["published", "published_at", "published_by"])
+                record_event(
+                    action="menu.published" if publish else "menu.unpublished",
+                    entity_type="Menu",
+                    entity_id=menu.pk,
+                    actor=request.user,
+                    campus=menu.campus,
+                    metadata={"serviceDate": str(menu.service_date)},
+                )
+                messages.success(
+                    request,
+                    "Cardápio publicado para os alunos."
+                    if publish
+                    else "Cardápio despublicado.",
+                )
             return redirect("menus:list")
 
         service_date = parse_date(request.POST.get("service_date", "") or "")
