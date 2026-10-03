@@ -1,0 +1,37 @@
+{% extends "portal/base.html" %}
+{% block title %}Recuperar senha — PNAE [CPN]{% endblock %}
+
+{% block content %}
+  <h1 class="mb-1 text-2xl font-bold">Recuperar senha</h1>
+  <p class="mb-4 text-sm text-slate-600">
+    Confirme sua matrícula e CPF para definir uma nova senha.
+  </p>
+
+  <form method="post" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    {% csrf_token %}
+    <label class="block text-sm">Matrícula
+      <input type="text" name="registration_number" required inputmode="numeric"
+             class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+    </label>
+    <label class="mt-3 block text-sm">CPF
+      <input type="text" name="cpf" required inputmode="numeric" placeholder="000.000.000-00"
+             class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+    </label>
+    <label class="mt-3 block text-sm">Nova senha
+      <input type="password" name="password" required autocomplete="new-password"
+             class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+    </label>
+    <label class="mt-3 block text-sm">Repita a senha
+      <input type="password" name="password2" required autocomplete="new-password"
+             class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+    </label>
+    <button type="submit"
+            class="mt-4 w-full rounded-full bg-emerald-700 px-4 py-2.5 font-medium text-white hover:bg-emerald-800">
+      Redefinir senha
+    </button>
+  </form>
+
+  <p class="mt-4 text-center text-sm">
+    <a href="{% url 'portal:login' %}" class="text-slate-500 hover:underline">Voltar ao login</a>
+  </p>
+{% endblock %}

@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 from django.utils import timezone
 
@@ -81,3 +82,38 @@ class ImportJob(models.Model):
 
     def __str__(self):
         return f"{self.file_name} ({self.get_status_display()})"
+
+
+class StudentAccount(models.Model):
+    """Conta de acesso do aluno ao portal.
+
+    Separada do `accounts.User` (equipe). Login por e-mail; a senha é definida
+    pelo próprio aluno no primeiro acesso (prova: matrícula + CPF).
+    """
+
+    student = models.OneToOneField(
+        Student,
+        on_delete=models.CASCADE,
+        related_name="account",
+        verbose_name="estudante",
+    )
+    email = models.EmailField("e-mail", unique=True)
+    password = models.CharField("senha", max_length=128)
+    is_active = models.BooleanField("ativo", default=True)
+    last_login_at = models.DateTimeField("último acesso", null=True, blank=True)
+    created_at = models.DateTimeField("criado em", auto_now_add=True)
+    updated_at = models.DateTimeField("atualizado em", auto_now=True)
+
+    class Meta:
+        verbose_name = "conta do aluno"
+        verbose_name_plural = "contas de aluno"
+        ordering = ["email"]
+
+    def __str__(self):
+        return self.email
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)

@@ -1,0 +1,21 @@
+{% extends "portal/base.html" %}
+{% block title %}Meu QR Code — PNAE [CPN]{% endblock %}
+
+{% block content %}
+  <div class="mb-4 flex items-center justify-between">
+    <h1 class="text-xl font-bold">Meu QR Code</h1>
+    <a href="{% url 'portal:dashboard' %}" class="text-sm text-slate-500 hover:underline">Início</a>
+  </div>
+
+  <div class="rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-200">
+    <img src="{{ qr }}" alt="QR Code de {{ student.registration_number }}"
+         class="mx-auto h-64 w-64">
+    <div class="mt-3 text-xs uppercase tracking-wide text-slate-500">Matrícula</div>
+    <div class="text-2xl font-bold tracking-wide">{{ student.registration_number }}</div>
+    <div class="mt-1 text-sm text-slate-600">{{ student.full_name }}</div>
+  </div>
+
+  <p class="mt-4 text-center text-sm text-slate-600">
+    Apresente esta tela no ponto de distribuição para retirar sua refeição.
+  </p>
+{% endblock %}

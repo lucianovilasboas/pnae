@@ -27,6 +27,9 @@ Controles concretos para o §10 do [plano do MVP](../plano_mvp_ifmg_alimenta.md)
   service, não só na UI.
 - Reautenticação para autorizar excedente/estornar quando exigido pela
   instituição (decisão aberta nº 4).
+- **Portal do aluno**: sessão isolada (`portal_account_id`), login por
+  e-mail + senha, primeiro acesso/recuperação por matrícula + CPF e *throttle*
+  de tentativas. A área da equipe e a do aluno não se cruzam.
 
 ## 4. Minimização (LGPD)
 
@@ -35,6 +38,8 @@ Controles concretos para o §10 do [plano do MVP](../plano_mvp_ifmg_alimenta.md)
 - Exportações exigem permissão e retornam só as colunas necessárias.
 - `AuditEvent.metadata_json` guarda o essencial (sem dado pessoal excessivo).
 - Testes e exemplos usam **apenas dados anonimizados**.
+- Portal do aluno: só o próprio cardápio publicado, o próprio QR/matrícula e a
+  própria conta; a página do QR responde com `Cache-Control: no-store`.
 
 ## 5. Auditoria
 
@@ -72,6 +77,7 @@ Eventos são imutáveis: sem `UPDATE`/`DELETE` na aplicação.
 - [ ] Segredos fora do repositório; `.env` não versionado.
 - [ ] Permissões por campus verificadas em todas as rotas.
 - [ ] Nenhum dado pessoal (nome/CPF/senha) em logs e respostas.
+- [ ] Base legal e política de uso do portal do aluno formalizadas.
 - [ ] Teste de concorrência verde (ver `05-testes.md`).
 - [ ] Backup + restauração testados.
 - [ ] Responsável institucional pelos dados e base legal definidos (§10.7).

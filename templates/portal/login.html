@@ -1,0 +1,28 @@
+{% extends "portal/base.html" %}
+{% block title %}Entrar — PNAE [CPN]{% endblock %}
+
+{% block content %}
+  <h1 class="mb-1 text-2xl font-bold">Portal do aluno</h1>
+  <p class="mb-4 text-sm text-slate-600">Entre com seu e-mail e senha.</p>
+
+  <form method="post" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    {% csrf_token %}
+    <label class="block text-sm">E-mail
+      <input type="email" name="email" required autocomplete="username"
+             class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+    </label>
+    <label class="mt-3 block text-sm">Senha
+      <input type="password" name="password" required autocomplete="current-password"
+             class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+    </label>
+    <button type="submit"
+            class="mt-4 w-full rounded-full bg-emerald-700 px-4 py-2.5 font-medium text-white hover:bg-emerald-800">
+      Entrar
+    </button>
+  </form>
+
+  <div class="mt-4 flex flex-col gap-2 text-center text-sm">
+    <a href="{% url 'portal:first-access' %}" class="text-emerald-700 hover:underline">Primeiro acesso</a>
+    <a href="{% url 'portal:recover' %}" class="text-slate-500 hover:underline">Esqueci minha senha</a>
+  </div>
+{% endblock %}

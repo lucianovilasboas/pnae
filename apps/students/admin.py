@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from apps.audit.admin_mixin import AuditedAdminMixin
 
-from .models import ImportJob, Student
+from .models import ImportJob, Student, StudentAccount
 
 
 @admin.register(Student)
@@ -11,6 +11,14 @@ class StudentAdmin(AuditedAdminMixin, admin.ModelAdmin):
     list_filter = ("campus", "class_group", "active")
     search_fields = ("full_name", "registration_number", "email")
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(StudentAccount)
+class StudentAccountAdmin(admin.ModelAdmin):
+    list_display = ("email", "student", "is_active", "last_login_at")
+    list_filter = ("is_active", "student__campus")
+    search_fields = ("email", "student__full_name", "student__registration_number")
+    readonly_fields = ("created_at", "updated_at", "last_login_at")
 
 
 @admin.register(ImportJob)

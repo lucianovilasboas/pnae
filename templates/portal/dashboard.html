@@ -1,0 +1,48 @@
+{% extends "portal/base.html" %}
+{% block title %}Início — PNAE [CPN]{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-bold">Olá, {{ student.full_name }}</h1>
+  <p class="text-xs text-slate-500">
+    {{ student.registration_number }}
+    · {{ student.class_group.label|default:"Sem turma" }}
+    · {{ student.campus.name }}
+  </p>
+
+  <a href="{% url 'portal:qr' %}"
+     class="mt-4 flex items-center justify-between rounded-2xl bg-emerald-700 p-4 text-white shadow hover:bg-emerald-800">
+    <span class="font-semibold">Meu QR Code</span>
+    <span class="text-sm">Mostrar →</span>
+  </a>
+
+  <section class="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <h2 class="font-semibold">Hoje · {{ today|date:"d/m" }}</h2>
+    {% for menu in today_menus %}
+      <div class="mt-2 border-t pt-2 first:border-0 first:pt-0">
+        <div class="text-xs font-medium uppercase tracking-wide text-emerald-700">{{ menu.get_meal_type_display }}</div>
+        <div class="text-sm">{{ menu.description }}</div>
+        {% if menu.notes %}<div class="text-xs text-slate-500">{{ menu.notes }}</div>{% endif %}
+      </div>
+    {% empty %}
+      <p class="mt-2 text-sm text-slate-500">Sem cardápio publicado para hoje.</p>
+    {% endfor %}
+  </section>
+
+  <section class="mt-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <h2 class="font-semibold">Amanhã · {{ tomorrow|date:"d/m" }}</h2>
+    {% for menu in tomorrow_menus %}
+      <div class="mt-2 border-t pt-2 first:border-0 first:pt-0">
+        <div class="text-xs font-medium uppercase tracking-wide text-emerald-700">{{ menu.get_meal_type_display }}</div>
+        <div class="text-sm">{{ menu.description }}</div>
+        {% if menu.notes %}<div class="text-xs text-slate-500">{{ menu.notes }}</div>{% endif %}
+      </div>
+    {% empty %}
+      <p class="mt-2 text-sm text-slate-500">Ainda não publicado.</p>
+    {% endfor %}
+  </section>
+
+  <a href="{% url 'portal:week' %}"
+     class="mt-4 block rounded-full border border-slate-300 px-4 py-2 text-center text-sm hover:bg-white">
+    Ver cardápio da semana
+  </a>
+{% endblock %}

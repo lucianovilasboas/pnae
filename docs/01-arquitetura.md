@@ -31,8 +31,9 @@ Um projeto `config` com apps sob `apps/`:
 config/                 # settings (base/dev/prod), urls, wsgi/asgi, celery? (não)
 apps/accounts/          # User custom, papéis, permissões extras, login
 apps/campus/            # Campus, ClassGroup
-apps/students/          # Student, ImportJob, importação CSV/XLSX, token QR
-apps/menus/             # Menu
+apps/students/          # Student, StudentAccount, ImportJob, importação, QR
+apps/menus/             # Menu (com publicação para o aluno)
+apps/portal/            # portal do aluno: login, cardápio e QR
 apps/distributions/     # Distribution, Delivery, regras, endpoint /scan
 apps/audit/             # AuditEvent
 templates/              # base + telas (operação, pendentes, relatório)

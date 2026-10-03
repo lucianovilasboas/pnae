@@ -41,6 +41,7 @@ códigos de barras 1D via ZXing; a câmera requer HTTPS).
 | Estudantes (criar/editar/inativar) | `/estudantes/` |
 | Importar estudantes | `/estudantes/importar/` |
 | QR Codes | `/estudantes/qr/` |
+| Portal do aluno (login/cardápio/QR) | `/aluno/` |
 | Auditoria | `/auditoria/` |
 
 Roteiro do operador (1 página) em
@@ -95,7 +96,7 @@ docker exec pnae_app_django bash -lc 'cd /pnae_app && python -m pytest'
 | Backend e páginas | Django 5 + Python 3.12 |
 | Banco | PostgreSQL 16 |
 | UI | Django templates + HTMX + Tailwind CSS |
-| QR Code | biblioteca Python; token opaco armazenado como hash |
+| QR Code | biblioteca Python; o conteúdo do QR é a matrícula do estudante |
 | PWA | app instalável: manifest + ícones + service worker (cache só de estáticos) |
 | Empacotamento | Docker / Docker Compose (dev e prod) |
 
@@ -140,7 +141,10 @@ duplicidade, excedente autorizado, painel de totais/pendentes, relatório
 diário, autenticação por perfis, auditoria e estorno.
 
 **Fora do MVP:** estoque/compras/custos, integração acadêmica, restrições
-alimentares, portal do estudante, login Google, offline/sincronização,
-multi-campus operacional e BI.
+alimentares, login Google, offline/sincronização, multi-campus operacional e BI.
+
+**Além do MVP (entregue):** portal do aluno — login por e-mail + senha
+(primeiro acesso/recuperação por matrícula + CPF), cardápio publicado (hoje,
+amanhã e semana) e QR Code com a matrícula. Rotas em `/aluno/`.
 
 Detalhes completos no [plano do MVP](plano_mvp_ifmg_alimenta.md).

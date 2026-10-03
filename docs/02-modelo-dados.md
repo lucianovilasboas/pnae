@@ -51,6 +51,16 @@ unique (campus_id, registration_number)
   por campus usado na leitura; nome e CPF **não** aparecem no QR.
 - `email` é usado pelo portal do aluno (opcional no MVP).
 
+### StudentAccount (`apps/students`)
+```text
+id, student_id OneToOne (cascade), email (unique), password (hash Django),
+is_active, last_login_at, created_at, updated_at
+```
+- Conta de acesso ao **portal do aluno**, separada do `accounts.User` da equipe
+  (sessão isolada, chave `portal_account_id`).
+- Primeiro acesso e recuperação exigem **matrícula + CPF**; a senha é definida
+  pelo próprio aluno. Login por **e-mail + senha**.
+
 ### User (`apps/accounts`)
 ```text
 id, campus_id FK null (admin global), name, email (unique),

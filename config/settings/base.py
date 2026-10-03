@@ -34,6 +34,7 @@ LOCAL_APPS = [
     "apps.campus",
     "apps.distributions",
     "apps.menus",
+    "apps.portal",
     "apps.students",
 ]
 

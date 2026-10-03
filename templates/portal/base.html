@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Portal do aluno — PNAE [CPN]{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <meta name="theme-color" content="#047857">
+  <link rel="icon" href="{% static 'icons/icon-192.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PNAE [CPN]">
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800">
+  <header class="sticky top-0 z-30 bg-emerald-700 text-white shadow">
+    <div class="mx-auto flex max-w-md items-center justify-between gap-2 px-4 py-3">
+      <a href="{% url 'portal:home' %}" class="flex items-center gap-2">
+        <img src="{% static 'img/ifmg-campus-pn.png' %}" alt="IFMG Campus Ponte Nova"
+             class="h-8 w-auto rounded bg-white p-0.5">
+        <span class="font-semibold">PNAE [CPN]</span>
+      </a>
+      {% if request.portal_account %}
+        <form method="post" action="{% url 'portal:logout' %}">
+          {% csrf_token %}
+          <button class="rounded-full bg-emerald-800 px-3 py-1.5 text-sm">Sair</button>
+        </form>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-md px-4 py-5">
+    {% if messages %}
+      <div class="mb-4 space-y-2">
+        {% for message in messages %}
+          <div class="rounded border px-3 py-2 text-sm
+                      {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-700
+                      {% elif message.tags == 'success' %}border-emerald-300 bg-emerald-50 text-emerald-700
+                      {% else %}border-slate-300 bg-white text-slate-700{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

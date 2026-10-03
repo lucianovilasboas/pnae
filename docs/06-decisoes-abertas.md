@@ -78,18 +78,23 @@ proposto** para não travar a implementação; confirmar antes do piloto.
 - **Consequência:** antifraude preservada; nenhuma mudança em `/scan` ou no
   modelo. A matrícula é identidade visível, não credencial.
 
-### ADR-008 — Portal do aluno (adiado) e publicação de cardápio
+### ADR-008 — Portal do aluno e publicação de cardápio
 
-- **Status:** proposto (fora do MVP; decisões registradas para a fase futura).
-- **Contexto:** portal/login do estudante está "explicitamente fora do MVP".
-- **Decisões registradas:**
-  - login do aluno por **e-mail + senha definida no primeiro acesso**;
-  - cardápio só aparece ao aluno quando o operador marcar uma **flag de
-    publicação** no `Menu` (controle explícito, não automático por data);
-  - o portal mostrará o **QR (matrícula) + o número** em destaque.
-- **Consequência:** exige modelar autenticação própria do aluno (conta separada
-  vinculada a `Student`), campo de publicação em `Menu` e base legal LGPD antes
-  de implementar.
+- **Status:** aceito (implementado; antes listado como fora do MVP).
+- **Contexto:** o aluno passa a acessar pelo celular o cardápio e o próprio QR.
+- **Decisões:**
+  - login do aluno por **e-mail + senha**, com senha definida no **primeiro
+    acesso**; primeiro acesso e recuperação provam identidade por
+    **matrícula + CPF** (sem envio de e-mail).
+  - conta própria do aluno (`StudentAccount`, OneToOne com `Student`), com
+    **sessão isolada** (`portal_account_id`) do `accounts.User` da equipe;
+  - cardápio só aparece ao aluno quando o operador marcar **publicado** no
+    `Menu` (controle explícito, não automático por data);
+  - o portal mostra hoje, amanhã e a semana atual, além do **QR (matrícula) +
+    o número** em destaque.
+- **Consequência:** nova app `apps/portal`, `Menu.published` e throttle básico
+  no login/primeiro acesso. Base legal LGPD e política de uso a formalizar com a
+  instituição antes de divulgar aos alunos.
 
 ### ADR-009 — QR codifica a matrícula do estudante
 
