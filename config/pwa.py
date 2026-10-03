@@ -35,7 +35,7 @@ def manifest(request):
 
 def service_worker(request):
     # Versão do cache: mude para forçar a atualização.
-    version = "v2"
+    version = "v3"
     script = """\
 const CACHE = 'ifmg-alimenta-%s';
 const STATIC_ASSETS = [
