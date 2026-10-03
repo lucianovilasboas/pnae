@@ -5,8 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}PNAE [CPN]{% endblock %}</title>
-  {# ADR-004: Tailwind via CDN no MVP; build standalone depois. #}
-  <script src="https://cdn.tailwindcss.com"></script>
+  {# Tailwind self-hosted (sem dependência de rede); build standalone depois (ADR-004). #}
+  <script src="{% static 'vendor/tailwind/tailwind.js' %}"></script>
   {# PWA: instalável (manifest + service worker + ícones). #}
   <link rel="manifest" href="{% url 'manifest' %}">
   <meta name="theme-color" content="#047857">

@@ -53,7 +53,7 @@ pnae_app/
 ├── config/                 # projeto Django (settings/, urls, wsgi, asgi)
 ├── apps/                   # apps de domínio
 ├── templates/              # templates compartilhados
-├── static/                 # fontes de front (Tailwind via CDN no MVP)
+├── static/                 # fontes de front (Tailwind self-hosted)
 ├── requirements.txt
 ├── manage.py
 ├── pytest.ini

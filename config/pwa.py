@@ -35,10 +35,11 @@ def manifest(request):
 
 def service_worker(request):
     # Versão do cache: mude para forçar a atualização.
-    version = "v1"
+    version = "v2"
     script = """\
 const CACHE = 'ifmg-alimenta-%s';
 const STATIC_ASSETS = [
+  '/static/vendor/tailwind/tailwind.js',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
   '/static/vendor/zxing/zxing-browser.min.js',

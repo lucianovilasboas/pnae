@@ -46,11 +46,14 @@ proposto** para não travar a implementação; confirmar antes do piloto.
 
 ### ADR-004 — Tailwind: CDN no MVP, build depois
 
-- **Status:** proposto.
-- **Contexto:** evitar pipeline de front no início.
-- **Decisão:** Tailwind via CDN no MVP; migrar para build standalone (npm)
-  quando a UI estabilizar.
-- **Consequência:** leve penalidade de performance aceitável; dívida registrada.
+- **Status:** parcial — self-hosted implementado; build real (npm) pendente.
+- **Contexto:** evitar pipeline de front no início; o CDN externo (407 KB,
+  render-blocking) piorava a latência e o service worker não o cacheava.
+- **Decisão:** manter a compilação em runtime, mas **self-hospedar** o
+  `tailwind.js` em `static/vendor/tailwind/` (sem Node, cacheável pelo PWA);
+  migrar para build standalone (npm) quando estabilizar.
+- **Consequência:** remove a dependência de rede por página; a compilação em
+  runtime ainda ocorre no cliente na primeira carga. Dívida registrada.
 
 ### ADR-005 — Estorno como transição de estado (sem entidade separada)
 
