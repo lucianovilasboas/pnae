@@ -440,6 +440,25 @@ class OperationCameraTests(DistributionFixture):
         self.assertIsNotNone(finders.find("vendor/zxing/zxing-browser.min.js"))
 
 
+class OperationLayoutTests(DistributionFixture):
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.operator)
+        self.body = self.client.get(
+            reverse("distributions:operation", args=[self.distribution.pk])
+        ).content.decode()
+
+    def test_campo_tem_botao_confirmar_ao_lado(self):
+        self.assertIn('id="scan-confirm"', self.body)
+        self.assertIn("Confirmar", self.body)
+
+    def test_camera_em_largura_total(self):
+        self.assertIn("h-64 w-full", self.body)
+
+    def test_confirmacao_abaixo_da_camera(self):
+        self.assertLess(self.body.index('id="video"'), self.body.index('id="feedback"'))
+
+
 class MobileUiTests(DistributionFixture):
     def test_cabecalho_tem_menu_hamburguer(self):
         self.client.force_login(self.operator)
