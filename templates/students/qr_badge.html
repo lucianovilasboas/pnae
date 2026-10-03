@@ -21,7 +21,10 @@
     .card-head .title { flex: 1; text-align: center; line-height: 1.05; }
     .card-head .title .app { font-size: 11pt; font-weight: bold; letter-spacing: 1px; }
     .card-head .title .campus { font-size: 6.5pt; }
-    .card-head img.campus { height: 8mm; }
+    .card-head .campus-logo { display: inline-block; height: 8mm; width: 14mm;
+                              background-image: var(--campus-logo);
+                              background-size: contain; background-repeat: no-repeat;
+                              background-position: right center; }
     .card-head .spacer { width: 8mm; }
     .card-body { flex: 1; display: flex; align-items: center; justify-content: center; }
     .qr { width: 30mm; height: 30mm; }
@@ -34,6 +37,7 @@
     .page:last-child { page-break-after: auto; }
     @media print { .toolbar { display: none; } }
   </style>
+  {% if logo %}<style>:root { --campus-logo: url("{{ logo }}"); }</style>{% endif %}
 </head>
 <body>
   <div class="toolbar">
@@ -56,7 +60,7 @@
                 <div class="campus">{{ campus.name }}</div>
               </div>
               {% if logo %}
-                <img class="campus" src="{{ logo }}" alt="{{ campus.name }}">
+                <span class="campus-logo" role="img" aria-label="{{ campus.name }}"></span>
               {% else %}
                 <span class="spacer"></span>
               {% endif %}

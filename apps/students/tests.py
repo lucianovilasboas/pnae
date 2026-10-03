@@ -1,7 +1,8 @@
 import io
+import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from openpyxl import Workbook
@@ -250,10 +251,8 @@ class QrExportTests(BaseStudentApiTests):
         self.assertIn("Ana Silva", body)
         self.assertNotIn("Bruno Souza", body)
 
+    @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
     def test_export_embute_logo_do_campus(self):
-        import io
-
-        from django.core.files.uploadedfile import SimpleUploadedFile
         from PIL import Image
 
         buffer = io.BytesIO()

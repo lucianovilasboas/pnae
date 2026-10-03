@@ -17,7 +17,10 @@
     .sheet-head .title { flex: 1; text-align: center; }
     .sheet-head .title .app { font-size: 16pt; font-weight: bold; letter-spacing: 1px; }
     .sheet-head .title .campus { font-size: 10pt; }
-    .sheet-head img.campus { height: 16mm; }
+    .sheet-head .campus-logo { display: inline-block; height: 16mm; width: 26mm;
+                                background-image: var(--campus-logo);
+                                background-size: contain; background-repeat: no-repeat;
+                                background-position: right center; }
     .sheet-head .spacer { width: 16mm; }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7mm; }
     .cell { height: 75mm; border: 1px solid #000; border-radius: 2mm; padding: 3mm;
@@ -33,6 +36,7 @@
     .foot { margin-top: 2mm; text-align: center; font-size: 8pt; color: #555; }
     @media print { .toolbar { display: none; } }
   </style>
+  {% if logo %}<style>:root { --campus-logo: url("{{ logo }}"); }</style>{% endif %}
 </head>
 <body>
   <div class="toolbar">
@@ -53,7 +57,7 @@
           <div class="campus">{{ campus.name }}</div>
         </div>
         {% if logo %}
-          <img class="campus" src="{{ logo }}" alt="{{ campus.name }}">
+          <span class="campus-logo" role="img" aria-label="{{ campus.name }}"></span>
         {% else %}
           <span class="spacer"></span>
         {% endif %}
