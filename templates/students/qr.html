@@ -8,9 +8,42 @@
     reimpressa quando precisar; nada é rotacionado.
   </div>
 
+  {# Busca para selecionar alunos específicos (reimpressão individual). #}
+  <form method="get" class="mb-4 grid gap-2 rounded-lg bg-white p-3 shadow sm:grid-cols-3">
+    <label class="text-xs sm:col-span-2">Buscar aluno (nome ou matrícula)
+      <input type="text" name="busca" value="{{ busca }}" placeholder="Ex.: Ana ou 2026001"
+             class="mt-1 w-full rounded border border-slate-300 p-2 text-sm">
+    </label>
+    <div class="flex items-end gap-2">
+      <button class="rounded-full bg-slate-700 px-4 py-2 text-sm text-white">Buscar</button>
+      <a href="{% url 'students_pages:qr-page' %}" class="text-xs text-slate-500 hover:underline">Limpar</a>
+    </div>
+  </form>
+
   <form method="post" action="{% url 'students:qr-export' %}" target="_blank"
         class="rounded-lg bg-white p-5 shadow">
     {% csrf_token %}
+
+    <fieldset class="mb-4">
+      <legend class="text-sm font-medium">Layout de impressão</legend>
+      <div class="mt-2 grid gap-2 sm:grid-cols-2">
+        <label class="flex items-start gap-2 rounded-lg border border-slate-300 p-3 text-sm">
+          <input type="radio" name="layout" value="lista" checked class="mt-0.5">
+          <span>
+            <strong>Lista de emergência</strong><br>
+            <span class="text-xs text-slate-500">9 por página (3×3), QRs grandes e bem separados. Para a mesa de entrega.</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2 rounded-lg border border-slate-300 p-3 text-sm">
+          <input type="radio" name="layout" value="carteirinha" class="mt-0.5">
+          <span>
+            <strong>Carteirinhas</strong><br>
+            <span class="text-xs text-slate-500">Cartões 85,6×54mm, 8 por página, com guias de corte.</span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
+
     <label class="block text-sm font-medium">Turma (opcional)</label>
     <select name="class_group" class="mt-1 w-full rounded border border-slate-300 p-2">
       <option value="">Todas as turmas</option>
@@ -18,6 +51,31 @@
         <option value="{{ group.pk }}">{{ group.name }} — {{ group.academic_year }}</option>
       {% endfor %}
     </select>
+
+    {% if results %}
+      <div class="mt-4 rounded-lg border border-slate-200 p-3">
+        <p class="text-sm font-medium">
+          Selecione um ou mais alunos (opcional) — {{ results|length }} resultado(s)
+        </p>
+        <p class="mb-2 text-xs text-slate-500">
+          Se marcar alunos, gera só esses (ignora a turma).
+        </p>
+        <ul class="max-h-72 space-y-1 overflow-y-auto text-sm">
+          {% for student in results %}
+            <li>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="students" value="{{ student.pk }}">
+                <span>{{ student.full_name }} — {{ student.registration_number }}
+                  <span class="text-xs text-slate-500">({{ student.class_group.label|default:"Sem turma" }})</span>
+                </span>
+              </label>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% elif busca %}
+      <p class="mt-3 text-sm text-slate-500">Nenhum aluno encontrado para “{{ busca }}”.</p>
+    {% endif %}
 
     <button type="submit"
             class="mt-4 rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">

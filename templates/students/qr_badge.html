@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+{% load static qr_tags %}
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carteirinhas — {{ campus.name }}</title>
+  <style>
+    @page { size: A4 portrait; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; margin: 0; }
+    .toolbar { padding: 8px 0; font-size: 13px; }
+    .toolbar button { padding: 6px 14px; }
+    .cards { display: grid; grid-template-columns: repeat(2, 85.6mm); grid-auto-rows: 54mm;
+             gap: 6mm; justify-content: center; }
+    .card { width: 85.6mm; height: 54mm; border: 1px dashed #9ca3af; border-radius: 3mm;
+            padding: 3mm; display: flex; flex-direction: column; overflow: hidden;
+            break-inside: avoid; page-break-inside: avoid; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 2mm; }
+    .card-head img.if { height: 8mm; }
+    .card-head .title { flex: 1; text-align: center; line-height: 1.05; }
+    .card-head .title .app { font-size: 11pt; font-weight: bold; letter-spacing: 1px; }
+    .card-head .title .campus { font-size: 6.5pt; }
+    .card-head img.campus { height: 8mm; }
+    .card-head .spacer { width: 8mm; }
+    .card-body { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .qr { width: 30mm; height: 30mm; }
+    .qr svg { display: block; width: 100%; height: 100%; }
+    .card-foot { text-align: center; line-height: 1.15; }
+    .reg { font-size: 12pt; font-weight: bold; letter-spacing: 1px; }
+    .name { font-size: 8pt; }
+    .group { font-size: 7pt; color: #333; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    @media print { .toolbar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <p>
+      <strong>Carteirinhas — {{ count }} cartão(ões) de 85,6×54mm.</strong>
+      Imprima em A4, escala 100%; recorte nas linhas pontilhadas. Conteúdo do QR = matrícula.
+    </p>
+    <button onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+
+  {% for page in pages %}
+    <section class="page">
+      <div class="cards">
+        {% for student in page %}
+          <div class="card">
+            <div class="card-head">
+              <img class="if" src="{% static 'img/if-marca.svg' %}" alt="Instituto Federal">
+              <div class="title">
+                <div class="app">PNAE</div>
+                <div class="campus">{{ campus.name }}</div>
+              </div>
+              {% if logo %}
+                <img class="campus" src="{{ logo }}" alt="{{ campus.name }}">
+              {% else %}
+                <span class="spacer"></span>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <div class="qr">{{ student.registration_number|qr_svg }}</div>
+            </div>
+            <div class="card-foot">
+              <div class="reg">{{ student.registration_number }}</div>
+              <div class="name">{{ student.full_name }}</div>
+              <div class="group">{{ student.class_group.label|default:"Sem turma" }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+</body>
+</html>

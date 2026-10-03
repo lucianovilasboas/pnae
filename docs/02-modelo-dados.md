@@ -168,6 +168,10 @@ Criadas em migrations `RunSQL`/`AddConstraint`, não só na interface:
   crachá e o portal do aluno (ver ADR-009 em `06-decisoes-abertas.md`).
 - Nota histórica: o desenho anterior (token opaco de 160 bits + HMAC com
   `QR_PEPPER`) foi substituído; a `QR_PEPPER` deixa de ser usada.
+- **Impressão:** dois layouts HTML de impressão (`qr_sheet.html` — lista de
+  emergência 3×3; `qr_badge.html` — carteirinha 85,6×54mm), com QR em SVG
+  (nítido). Exporta por turma, todos ou alunos selecionados. O logo do campus
+  vem de `Campus.logo` e é embutido como data URI.
 
 ## 6. Estorno — modelagem
 

@@ -203,13 +203,36 @@ class QrExportTests(BaseStudentApiTests):
             class_group=self.group,
         )
 
-    def test_export_gera_folha_com_matricula(self):
-        response = self.client.post(reverse("students:qr-export"))
+    def test_export_lista_gera_folha_com_matricula(self):
+        response = self.client.post(reverse("students:qr-export"), {"layout": "lista"})
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response["Content-Type"])
         body = response.content.decode()
-        self.assertIn("data:image/png;base64,", body)
+        self.assertIn("<svg", body)  # QR em SVG (nítido na impressão)
         self.assertIn("2026001", body)
+        self.assertIn('class="cell"', body)
+
+    def test_export_carteirinha_usa_cartao(self):
+        body = self.client.post(
+            reverse("students:qr-export"), {"layout": "carteirinha"}
+        ).content.decode()
+        self.assertIn("<svg", body)
+        self.assertIn("85.6mm", body)
+        self.assertIn('class="card"', body)
+
+    def test_export_seleciona_alunos(self):
+        Student.objects.create(
+            campus=self.campus,
+            registration_number="2026099",
+            full_name="Bruno Souza",
+            class_group=self.group,
+        )
+        body = self.client.post(
+            reverse("students:qr-export"),
+            {"layout": "lista", "students": [self.student.pk]},
+        ).content.decode()
+        self.assertIn("Ana Silva", body)
+        self.assertNotIn("Bruno Souza", body)
 
     def test_export_filtra_por_turma(self):
         other = ClassGroup.objects.create(
@@ -226,6 +249,29 @@ class QrExportTests(BaseStudentApiTests):
         ).content.decode()
         self.assertIn("Ana Silva", body)
         self.assertNotIn("Bruno Souza", body)
+
+    def test_export_embute_logo_do_campus(self):
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        buffer = io.BytesIO()
+        Image.new("RGB", (10, 10), "white").save(buffer, format="PNG")
+        self.campus.logo.save(
+            "logo.png",
+            SimpleUploadedFile("logo.png", buffer.getvalue(), content_type="image/png"),
+        )
+        body = self.client.post(reverse("students:qr-export")).content.decode()
+        self.assertIn("data:image/png;base64,", body)
+
+    def test_pagina_qr_permite_buscar_aluno(self):
+        page = self.client.get(reverse("students_pages:qr-page"), {"busca": "Ana"})
+        self.assertEqual(page.status_code, 200)
+        body = page.content.decode()
+        self.assertIn("Ana Silva", body)
+        self.assertIn('name="students"', body)
+        self.assertIn("Carteirinhas", body)
 
 
 class StudentPagesTests(BaseStudentApiTests):

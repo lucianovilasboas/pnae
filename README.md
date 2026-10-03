@@ -44,6 +44,16 @@ códigos de barras 1D via ZXing; a câmera requer HTTPS).
 | Portal do aluno (login/cardápio/QR) | `/aluno/` |
 | Auditoria | `/auditoria/` |
 
+**Impressão de QR** (`/estudantes/qr/`): dois layouts em A4, gerados para
+imprimir/salvar como PDF no navegador:
+- **Lista de emergência** — 9 por página (3×3), QRs grandes e bem separados
+  (evita a câmera ler o código vizinho); matrícula em destaque. Para a mesa de
+  entrega quando o aluno não tem o QR/celular.
+- **Carteirinhas** — cartões de 85,6×54mm, 8 por página, com guias de corte.
+- Dá para gerar por **turma**, **todos** ou **selecionar alunos** (busca por
+  nome/matrícula). A marca no cabeçalho é do **Instituto Federal** e o logo do
+  campus vem do campo `Campus.logo`.
+
 Roteiro do operador (1 página) em
 [`docs/09-treinamento-operador.md`](docs/09-treinamento-operador.md).
 

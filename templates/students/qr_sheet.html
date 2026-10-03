@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+{% load static qr_tags %}
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lista de QR — {{ campus.name }}</title>
+  <style>
+    @page { size: A4 portrait; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; margin: 0; }
+    .toolbar { padding: 8px 0; font-size: 13px; }
+    .toolbar button { padding: 6px 14px; }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between;
+                  gap: 8mm; border-bottom: 1.5px solid #000; padding-bottom: 2mm; margin-bottom: 4mm; }
+    .sheet-head img.if { height: 14mm; }
+    .sheet-head .title { flex: 1; text-align: center; }
+    .sheet-head .title .app { font-size: 16pt; font-weight: bold; letter-spacing: 1px; }
+    .sheet-head .title .campus { font-size: 10pt; }
+    .sheet-head img.campus { height: 16mm; }
+    .sheet-head .spacer { width: 16mm; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7mm; }
+    .cell { height: 75mm; border: 1px solid #000; border-radius: 2mm; padding: 3mm;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; break-inside: avoid; page-break-inside: avoid; }
+    .qr { width: 46mm; height: 46mm; }
+    .qr svg { display: block; width: 100%; height: 100%; }
+    .reg { margin-top: 2mm; font-size: 15pt; font-weight: bold; letter-spacing: 1px; }
+    .name { margin-top: 1mm; font-size: 10pt; }
+    .group { font-size: 8.5pt; color: #333; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .foot { margin-top: 2mm; text-align: center; font-size: 8pt; color: #555; }
+    @media print { .toolbar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <p>
+      <strong>Lista de emergência — {{ count }} QR(s).</strong>
+      Conteúdo do QR = matrícula. Ao imprimir, escolha A4 e mantenha a escala em 100%.
+      9 por página, com espaço entre os códigos para a câmera não ler o vizinho.
+    </p>
+    <button onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+
+  {% for page in pages %}
+    <section class="page">
+      <header class="sheet-head">
+        <img class="if" src="{% static 'img/if-marca.svg' %}" alt="Instituto Federal">
+        <div class="title">
+          <div class="app">PNAE</div>
+          <div class="campus">{{ campus.name }}</div>
+        </div>
+        {% if logo %}
+          <img class="campus" src="{{ logo }}" alt="{{ campus.name }}">
+        {% else %}
+          <span class="spacer"></span>
+        {% endif %}
+      </header>
+      <div class="grid">
+        {% for student in page %}
+          <div class="cell">
+            <div class="qr">{{ student.registration_number|qr_svg }}</div>
+            <div class="reg">{{ student.registration_number }}</div>
+            <div class="name">{{ student.full_name }}</div>
+            <div class="group">{{ student.class_group.label|default:"Sem turma" }}</div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="foot">Gerado em {{ generated_at|date:"d/m/Y H:i" }} — {{ campus.name }}</div>
+    </section>
+  {% endfor %}
+</body>
+</html>

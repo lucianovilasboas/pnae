@@ -3,13 +3,16 @@
 Ver docs/03-api.md §8 e §2. Autorização: apenas administrador.
 """
 
+import base64
 import csv
 import io
+import os
 
 from django.core.files.storage import default_storage
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
-from django.utils.html import escape
+from django.template.loader import render_to_string
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.decorators import api_admin_required
@@ -19,8 +22,17 @@ from apps.campus.selectors import resolve_campus
 
 from .importers import RosterFormatError, missing_group_names
 from .models import ImportJob, ImportJobStatus
-from .qr import qr_data_uri, students_for_qr
+from .qr import students_for_qr
 from .services import apply_import, create_import_preview
+
+_PAGE_SIZE = {"lista": 9, "carteirinha": 8}
+_LOGO_MIME = {
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "svg": "image/svg+xml",
+    "webp": "image/webp",
+}
 
 
 def _campus_or_400(request):
@@ -145,40 +157,23 @@ def import_errors(request, pk):
     )
 
 
-_QR_SHEET = """<!DOCTYPE html>
-<html lang="pt-br"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QR Codes — IFMG Alimenta</title>
-<style>
-  body {{ font-family: sans-serif; margin: 12px; }}
-  .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }}
-  .card {{ border: 1px solid #ccc; border-radius: 6px; padding: 8px; text-align: center;
-           break-inside: avoid; }}
-  .name {{ font-weight: bold; font-size: 13px; }}
-  .meta {{ font-size: 11px; color: #444; }}
-  img {{ width: 120px; height: 120px; }}
-  @media print {{
-    .no-print {{ display: none; }}
-    .grid {{ grid-template-columns: repeat(3, 1fr); }}
-  }}
-</style></head><body>
-<div class="no-print">
-  <p>Folha de {count} QR Codes (o conteúdo é a matrícula do estudante).
-  Confira a lista antes de imprimir.</p>
-  <button onclick="window.print()">Imprimir</button>
-</div>
-<div class="grid">
-{cards}
-</div>
-</body></html>"""
+def _file_data_uri(field):
+    """Lê um FileField e devolve data URI (funciona sem servir /media em prod)."""
+    if not field:
+        return None
+    try:
+        with field.open("rb") as handle:
+            raw = handle.read()
+    except (OSError, ValueError):
+        return None
+    ext = os.path.splitext(field.name)[1].lower().lstrip(".")
+    mime = _LOGO_MIME.get(ext, "image/png")
+    return f"data:{mime};base64," + base64.b64encode(raw).decode("ascii")
 
 
-_CARD = """  <div class="card">
-    <img src="{img}" alt="QR">
-    <div class="name">{name}</div>
-    <div class="meta">{registration}</div>
-    <div class="meta">{class_name}</div>
-  </div>"""
+def _chunk(items, size):
+    for index in range(0, len(items), size):
+        yield items[index : index + size]
 
 
 @require_POST
@@ -188,12 +183,19 @@ def qr_export(request):
     if error_response:
         return error_response
 
+    layout = request.POST.get("layout", "lista")
+    if layout not in _PAGE_SIZE:
+        layout = "lista"
+
     class_group = None
     class_group_id = request.POST.get("class_group")
     if class_group_id:
         class_group = get_object_or_404(ClassGroup, pk=class_group_id, campus=campus)
 
-    students = students_for_qr(campus, class_group=class_group)
+    student_ids = [sid for sid in request.POST.getlist("students") if sid]
+    if student_ids:
+        class_group = None  # seleção explícita tem prioridade
+    students = students_for_qr(campus, class_group=class_group, students=student_ids or None)
 
     record_event(
         action="students.qr.exported",
@@ -201,17 +203,20 @@ def qr_export(request):
         entity_id=campus.pk,
         actor=request.user,
         campus=campus,
-        metadata={"count": len(students)},
+        metadata={"count": len(students), "layout": layout},
     )
 
-    cards = "\n".join(
-        _CARD.format(
-            img=qr_data_uri(student.registration_number),
-            name=escape(student.full_name),
-            registration=escape(student.registration_number),
-            class_name=escape(student.class_group.label if student.class_group else "—"),
-        )
-        for student in students
+    template = "students/qr_badge.html" if layout == "carteirinha" else "students/qr_sheet.html"
+    html = render_to_string(
+        template,
+        {
+            "campus": campus,
+            "students": students,
+            "pages": list(_chunk(students, _PAGE_SIZE[layout])),
+            "count": len(students),
+            "logo": _file_data_uri(campus.logo),
+            "generated_at": timezone.now(),
+        },
+        request=request,
     )
-    html = _QR_SHEET.format(count=len(students), cards=cards)
     return HttpResponse(html, content_type="text/html; charset=utf-8")

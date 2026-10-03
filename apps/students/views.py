@@ -113,10 +113,27 @@ def qr_page(request):
     groups = ClassGroup.objects.none()
     if campus is not None:
         groups = ClassGroup.objects.filter(campus=campus, active=True).order_by("name")
+
+    busca = (request.GET.get("busca") or "").strip()
+    results = []
+    if campus is not None and busca:
+        results = list(
+            Student.objects.filter(campus=campus, active=True)
+            .filter(Q(full_name__icontains=busca) | Q(registration_number__icontains=busca))
+            .select_related("class_group")
+            .order_by("full_name")[:50]
+        )
+
     return render(
         request,
         "students/qr.html",
-        {"class_groups": groups, "campus": campus, "breadcrumbs": QR_CRUMBS},
+        {
+            "class_groups": groups,
+            "campus": campus,
+            "busca": busca,
+            "results": results,
+            "breadcrumbs": QR_CRUMBS,
+        },
     )
 
 
