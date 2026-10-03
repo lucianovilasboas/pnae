@@ -38,6 +38,7 @@ códigos de barras 1D via ZXing; a câmera requer HTTPS).
 | Pendentes | `/distribuicoes/<id>/pendentes/` |
 | Relatório diário | `/distribuicoes/<id>/relatorio/` |
 | Cardápios | `/cardapios/` |
+| Estudantes (criar/editar/inativar) | `/estudantes/` |
 | Importar estudantes | `/estudantes/importar/` |
 | QR Codes | `/estudantes/qr/` |
 | Auditoria | `/auditoria/` |

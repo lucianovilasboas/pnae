@@ -10,6 +10,8 @@
      class="{{ link_class }}{% if '/auditoria/' in path %} {{ active_class }}{% endif %}">Auditoria</a>
 {% endif %}
 {% if user.is_superuser or user.role == 'ADMIN' %}
+  <a href="{% url 'students_pages:student-list' %}"
+     class="{{ link_class }}{% if '/estudantes/' in path and '/importar/' not in path and '/qr/' not in path %} {{ active_class }}{% endif %}">Estudantes</a>
   <a href="{% url 'students_pages:import-page' %}"
      class="{{ link_class }}{% if '/estudantes/importar/' in path %} {{ active_class }}{% endif %}">Importar</a>
   <a href="{% url 'students_pages:qr-page' %}"

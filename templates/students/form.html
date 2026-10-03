@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{% if student %}Editar estudante{% else %}Novo estudante{% endif %} — PNAE [CPN]{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4 text-2xl font-bold">
+    {% if student %}Editar estudante{% else %}Novo estudante{% endif %}
+  </h1>
+
+  <form method="post"
+        action="{% if student %}{% url 'students_pages:student-edit' student.pk %}{% else %}{% url 'students_pages:student-create' %}{% endif %}"
+        class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+    {% csrf_token %}
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm">Matrícula
+        <input type="text" name="registration_number" required
+               value="{{ student.registration_number|default:'' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Nome completo
+        <input type="text" name="full_name" required
+               value="{{ student.full_name|default:'' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">E-mail (opcional)
+        <input type="email" name="email"
+               value="{{ student.email|default:'' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm">Curso (opcional)
+        <input type="text" name="course"
+               value="{{ student.course|default:'' }}"
+               class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+      </label>
+      <label class="text-sm sm:col-span-2">Turma (opcional)
+        <select name="class_group" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+          <option value="">Sem turma</option>
+          {% for group in class_groups %}
+            <option value="{{ group.pk }}" {% if student.class_group_id == group.pk %}selected{% endif %}>
+              {{ group.label }} — {{ group.academic_year }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="flex items-center gap-2 text-sm sm:col-span-2">
+        <input type="hidden" name="active" value="0">
+        <input type="checkbox" name="active" value="1"
+               {% if not student or student.active %}checked{% endif %}>
+        Estudante ativo (apto a receber)
+      </label>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button type="submit" class="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">
+        Salvar
+      </button>
+      <a href="{% url 'students_pages:student-list' %}" class="rounded-full border border-slate-300 px-4 py-2 text-sm">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

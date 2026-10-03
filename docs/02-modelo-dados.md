@@ -213,6 +213,14 @@ Regras implementadas nas telas de Distribuições e Cardápios:
     auditado (`menu.updated`).
   - **Excluir**: bloqueado se houver **distribuição vinculada**; auditado
     (`menu.deleted`).
+- **Estudante** (tela de Estudantes, administrador)
+  - **Criar/Editar**: matrícula, nome, e-mail, curso, turma e situação `ativo`
+    (`campus` vem do escopo do usuário). Auditado (`student.created` /
+    `student.updated`).
+  - **Inativar**: `active=false` (sem DELETE físico, RN-09); reativação pela
+    própria edição. Auditado (`student.deactivated`).
+  - A unicidade `(campus, registration_number)` continua sendo a fonte de
+    verdade; matrícula repetida é recusada com aviso.
 
 > Entregas e importações permanecem **sem exclusão física** (RN-09); as
 > exclusões acima são de entidades administrativas e sempre geram auditoria.

@@ -274,6 +274,119 @@ class StudentPagesTests(BaseStudentApiTests):
         self.assertContains(response, "Exportar QR Codes")
 
 
+class StudentCrudTests(BaseStudentApiTests):
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.admin)
+
+    def _create(self, **overrides):
+        data = {
+            "registration_number": "2026001",
+            "full_name": "Ana Silva",
+            "email": "ana@example.org",
+            "course": "Informática",
+            "class_group": self.group.pk,
+            "active": "1",
+        }
+        data.update(overrides)
+        return self.client.post(reverse("students_pages:student-create"), data)
+
+    def test_admin_cria_estudante(self):
+        response = self._create()
+        self.assertEqual(response.status_code, 302)
+        student = Student.objects.get(registration_number="2026001")
+        self.assertEqual(student.full_name, "Ana Silva")
+        self.assertEqual(student.class_group, self.group)
+        self.assertTrue(student.active)
+        from apps.audit.models import AuditEvent
+
+        self.assertTrue(AuditEvent.objects.filter(action="student.created").exists())
+
+    def test_operador_sem_permissao(self):
+        self.client.force_login(self.operator)
+        self.assertEqual(
+            self.client.get(reverse("students_pages:student-list")).status_code, 403
+        )
+        self.assertEqual(self._create().status_code, 403)
+
+    def test_matricula_duplicada_nao_grava(self):
+        self._create()
+        self._create(full_name="Ana Duplicada")
+        self.assertEqual(Student.objects.filter(registration_number="2026001").count(), 1)
+
+    def test_edita_estudante(self):
+        self._create()
+        student = Student.objects.get(registration_number="2026001")
+        response = self.client.post(
+            reverse("students_pages:student-edit", args=[student.pk]),
+            {
+                "registration_number": "2026001",
+                "full_name": "Ana Atualizada",
+                "class_group": "",
+                "active": "1",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        student.refresh_from_db()
+        self.assertEqual(student.full_name, "Ana Atualizada")
+        self.assertIsNone(student.class_group)
+
+    def test_inativa_e_remove_da_lista_ativa(self):
+        from apps.audit.models import AuditEvent
+
+        self._create()
+        student = Student.objects.get(registration_number="2026001")
+        response = self.client.post(
+            reverse("students_pages:student-deactivate", args=[student.pk])
+        )
+        self.assertEqual(response.status_code, 302)
+        student.refresh_from_db()
+        self.assertFalse(student.active)
+        self.assertTrue(AuditEvent.objects.filter(action="student.deactivated").exists())
+
+        page = self.client.get(reverse("students_pages:student-list")).content.decode()
+        self.assertNotIn("Ana Silva", page)
+
+    def test_reativa_pela_edicao(self):
+        student = Student.objects.create(
+            campus=self.campus,
+            registration_number="2026002",
+            full_name="Bruno Souza",
+            active=False,
+        )
+        self.client.post(
+            reverse("students_pages:student-edit", args=[student.pk]),
+            {"registration_number": "2026002", "full_name": "Bruno Souza", "active": "1"},
+        )
+        student.refresh_from_db()
+        self.assertTrue(student.active)
+
+    def test_lista_busca_por_nome(self):
+        self._create()
+        self._create(registration_number="2026002", full_name="Bruno Souza")
+        page = self.client.get(reverse("students_pages:student-list"), {"busca": "Bruno"})
+        self.assertContains(page, "Bruno Souza")
+        self.assertNotContains(page, "Ana Silva")
+
+    def test_escopo_por_campus(self):
+        other = Campus.objects.create(name="Campus Outro", code="OUT")
+        Student.objects.create(
+            campus=other, registration_number="9001", full_name="Aluno Outro"
+        )
+        page = self.client.get(reverse("students_pages:student-list"))
+        self.assertNotContains(page, "Aluno Outro")
+
+    def test_nao_edita_estudante_de_outro_campus(self):
+        other = Campus.objects.create(name="Campus Outro", code="OUT")
+        student = Student.objects.create(
+            campus=other, registration_number="9001", full_name="Aluno Outro"
+        )
+        response = self.client.get(
+            reverse("students_pages:student-edit", args=[student.pk])
+        )
+        self.assertEqual(response.status_code, 302)
+
+
 class DryRunNewCampusTests(TestCase):
     """Dry-run com campus ainda inexistente (transiente, sem pk) não deve quebrar."""
 
