@@ -5,6 +5,7 @@ class Campus(models.Model):
     name = models.CharField("nome", max_length=150)
     code = models.CharField("código", max_length=30, unique=True)
     timezone = models.CharField("fuso horário", max_length=64, default="America/Sao_Paulo")
+    logo = models.ImageField("logo", upload_to="campus/", blank=True, null=True)
     active = models.BooleanField("ativo", default=True)
     created_at = models.DateTimeField("criado em", auto_now_add=True)
 
