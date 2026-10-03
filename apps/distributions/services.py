@@ -108,6 +108,43 @@ def close_distribution(*, distribution, user):
     return distribution
 
 
+def _auto_close(distribution):
+    """Encerra uma distribuição sem ator humano (auto-encerramento)."""
+    distribution.status = DistributionStatus.CLOSED
+    distribution.closed_by = None
+    distribution.closed_at = timezone.now()
+    distribution.save(update_fields=["status", "closed_by", "closed_at", "updated_at"])
+    record_event(
+        action="distribution.auto_closed",
+        entity_type="Distribution",
+        entity_id=distribution.pk,
+        actor=None,
+        campus=distribution.campus,
+        metadata={"serviceDate": str(distribution.service_date)},
+    )
+
+
+def close_stale_distributions(*, campus=None, today=None):
+    """Encerra distribuições abertas de dias anteriores (limpeza preguiçosa).
+
+    Chamada quando o usuário abre as telas; não depende de cron. Distribuições
+    abertas cujo `service_date` já passou vão para `CLOSED` com auditoria
+    (`distribution.auto_closed`, sem ator).
+    """
+    today = today or timezone.localdate()
+    queryset = Distribution.objects.filter(
+        status=DistributionStatus.OPEN, service_date__lt=today
+    ).select_related("campus")
+    if campus is not None:
+        queryset = queryset.filter(campus=campus)
+
+    closed = []
+    for distribution in queryset:
+        _auto_close(distribution)
+        closed.append(distribution)
+    return closed
+
+
 def reopen_distribution(*, distribution, user):
     """Reabre uma distribuição encerrada **do dia de hoje** (RN: só no mesmo dia)."""
     if distribution.status != DistributionStatus.CLOSED:

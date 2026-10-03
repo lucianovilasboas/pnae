@@ -619,6 +619,55 @@ class ReopenTests(DistributionFixture):
         self.assertEqual(self.distribution.status, DistributionStatus.OPEN)
 
 
+class AutoCloseTests(DistributionFixture):
+    def _stale_open(self, days=1, campus=None, meal_type="SNACK"):
+        return Distribution.objects.create(
+            campus=campus or self.campus,
+            service_date=timezone.localdate() - timedelta(days=days),
+            meal_type=meal_type,
+            planned_start_at=timezone.now() - timedelta(days=days),
+            planned_end_at=timezone.now() - timedelta(days=days),
+            status=DistributionStatus.OPEN,
+        )
+
+    def test_encerra_aberta_de_dia_anterior(self):
+        from apps.audit.models import AuditEvent
+
+        stale = self._stale_open()
+        closed = services.close_stale_distributions(campus=self.campus)
+
+        stale.refresh_from_db()
+        self.assertEqual(stale.status, DistributionStatus.CLOSED)
+        self.assertIsNone(stale.closed_by)
+        self.assertIsNotNone(stale.closed_at)
+        self.assertEqual([d.pk for d in closed], [stale.pk])
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action="distribution.auto_closed", entity_id=str(stale.pk)
+            ).exists()
+        )
+
+    def test_nao_encerra_aberta_de_hoje(self):
+        services.close_stale_distributions(campus=self.campus)
+        self.distribution.refresh_from_db()
+        self.assertEqual(self.distribution.status, DistributionStatus.OPEN)
+
+    def test_respeita_escopo_de_campus(self):
+        other = Campus.objects.create(name="Campus Outro", code="OUT")
+        stale_other = self._stale_open(campus=other)
+        services.close_stale_distributions(campus=self.campus)
+        stale_other.refresh_from_db()
+        self.assertEqual(stale_other.status, DistributionStatus.OPEN)
+
+    def test_abrir_lista_encerra_pendentes(self):
+        stale = self._stale_open()
+        self.client.force_login(self.operator)
+        response = self.client.get(reverse("distributions:list"))
+        self.assertEqual(response.status_code, 200)
+        stale.refresh_from_db()
+        self.assertEqual(stale.status, DistributionStatus.CLOSED)
+
+
 class BreadcrumbsTests(DistributionFixture):
     def test_operacao_tem_migalhas(self):
         self.client.force_login(self.operator)

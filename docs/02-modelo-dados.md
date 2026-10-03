@@ -204,6 +204,10 @@ Regras implementadas nas telas de Distribuições e Cardápios:
     `AuditEvent`). Cancelada não aceita leitura. Auditado
     (`distribution.canceled`).
   - **Encerrada**: só **reabre no mesmo dia** (`distribution.reopened`).
+  - **Auto-encerramento**: ao abrir as telas, distribuições `ABERTA` com
+    `service_date` anterior a hoje vão para `ENCERRADA` com
+    `closed_by=null` e auditoria (`distribution.auto_closed`). Não depende de
+    cron.
 - **Cardápio**
   - **Editar**: respeita o único `(campus, service_date, meal_type)`;
     auditado (`menu.updated`).

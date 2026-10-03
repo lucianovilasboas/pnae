@@ -32,6 +32,8 @@ def _require_operator(request):
 
 def _scoped_distributions(request):
     campus = resolve_campus(request.user, request)
+    # Auto-encerramento preguiçoso: distribuições abertas de dias anteriores.
+    services.close_stale_distributions(campus=campus)
     queryset = Distribution.objects.all()
     if campus is not None and not request.user.is_superuser:
         queryset = queryset.filter(campus=campus)
@@ -48,6 +50,7 @@ def _aware(value):
 @login_required
 def home(request):
     campus = resolve_campus(request.user, request)
+    services.close_stale_distributions(campus=campus)
 
     current = Distribution.objects.filter(status=DistributionStatus.OPEN)
     if campus is not None:
