@@ -10,31 +10,6 @@ from apps.accounts.models import User, UserRole
 from apps.campus.models import Campus, ClassGroup
 from apps.students.models import ImportJob, ImportJobStatus, Student
 
-from .tokens import TOKEN_BYTES, generate_token, hash_token
-
-
-class TokenTests(TestCase):
-    def test_token_is_opaque_and_high_entropy(self):
-        token = generate_token()
-        self.assertIsInstance(token, str)
-        self.assertGreaterEqual(len(token), 16)
-        self.assertNotEqual(generate_token(), generate_token())
-
-    def test_token_bytes_meets_minimum(self):
-        # >= 160 bits de entropia (RN-07).
-        self.assertGreaterEqual(TOKEN_BYTES * 8, 160)
-
-    def test_hash_is_deterministic(self):
-        token = "token-de-teste"
-        self.assertEqual(hash_token(token), hash_token(token))
-
-    def test_hash_differs_per_token(self):
-        self.assertNotEqual(hash_token("a"), hash_token("b"))
-
-    def test_empty_token_rejected(self):
-        with self.assertRaises(ValueError):
-            hash_token("")
-
 
 class BaseStudentApiTests(TestCase):
     def setUp(self):
@@ -228,31 +203,29 @@ class QrExportTests(BaseStudentApiTests):
             class_group=self.group,
         )
 
-    def test_export_gera_token_e_folha_imprimivel(self):
-        self.assertEqual(self.student.qr_token_hash, "")
+    def test_export_gera_folha_com_matricula(self):
         response = self.client.post(reverse("students:qr-export"))
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response["Content-Type"])
-        self.assertIn("data:image/png;base64,", response.content.decode())
-        self.student.refresh_from_db()
-        self.assertNotEqual(self.student.qr_token_hash, "")
+        body = response.content.decode()
+        self.assertIn("data:image/png;base64,", body)
+        self.assertIn("2026001", body)
 
-    def test_export_rotaciona_token(self):
-        self.client.post(reverse("students:qr-export"))
-        self.student.refresh_from_db()
-        first = self.student.qr_token_hash
-        self.client.post(reverse("students:qr-export"))
-        self.student.refresh_from_db()
-        self.assertNotEqual(first, self.student.qr_token_hash)
-
-    def test_only_missing_nao_toca_quem_ja_tem_token(self):
-        self.client.post(reverse("students:qr-export"))
-        self.student.refresh_from_db()
-        before = self.student.qr_token_hash
-        response = self.client.post(reverse("students:qr-export"), {"only_missing": "1"})
-        self.assertEqual(response.status_code, 200)
-        self.student.refresh_from_db()
-        self.assertEqual(before, self.student.qr_token_hash)
+    def test_export_filtra_por_turma(self):
+        other = ClassGroup.objects.create(
+            campus=self.campus, name="2º Ano B", academic_year=2026
+        )
+        Student.objects.create(
+            campus=self.campus,
+            registration_number="2026099",
+            full_name="Bruno Souza",
+            class_group=other,
+        )
+        body = self.client.post(
+            reverse("students:qr-export"), {"class_group": self.group.pk}
+        ).content.decode()
+        self.assertIn("Ana Silva", body)
+        self.assertNotIn("Bruno Souza", body)
 
 
 class StudentPagesTests(BaseStudentApiTests):

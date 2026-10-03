@@ -25,7 +25,7 @@ O MVP deve permitir que a equipe do PNAE realize uma sessão de distribuição c
 | Tempo de resposta após leitura válida | até 1 segundo em rede normal |
 | Entrega regular duplicada | 0, bloqueada por regra de banco e aplicação |
 | Auditoria de operações | 100% das entregas, autorizações, estornos e mudanças de status |
-| Identificação no QR | nenhum dado pessoal legível; somente token opaco |
+| Identificação no QR | matrícula do estudante (identificador único por campus) |
 | Operação por celular e leitor USB | suportada nos navegadores-alvo |
 
 ---
@@ -134,7 +134,7 @@ O perfil Gestor é somente leitura no MVP. A autorização de excedente pode ser
 | RN-04 | A tentativa duplicada não gera entrega, somente feedback na interface e evento de auditoria opcional. |
 | RN-05 | Uma entrega `EXCEDENTE` exige justificativa, operador solicitante e usuário autorizador. |
 | RN-06 | A entrega excedente só pode ocorrer enquanto a distribuição estiver aberta e com excedentes liberados ou mediante autorização explícita. |
-| RN-07 | QR Code contém token aleatório/opaco; nome, matrícula, CPF e turma nunca aparecem codificados. |
+| RN-07 | QR Code codifica a matrícula do estudante (identificador único por campus); nome, CPF e turma não aparecem codificados. |
 | RN-08 | Estudante inativo ou de outro campus não pode receber entrega. |
 | RN-09 | Entregas e importações não são apagadas fisicamente; correções usam status e registros de auditoria. |
 | RN-10 | Horários são armazenados em UTC e apresentados no fuso do campus. |
@@ -160,7 +160,7 @@ CLASS_GROUP
 
 STUDENT
 - id, campus_id, registration_number, full_name, email, class_group_id,
-  qr_token_hash, active, created_at, updated_at
+  active, created_at, updated_at
 
 USER
 - id, campus_id (nullable para administrador global), name, email,
@@ -193,7 +193,7 @@ IMPORT_JOB
 ### Restrições importantes no PostgreSQL
 
 - `UNIQUE (campus_id, registration_number)` em estudante;
-- índice por `qr_token_hash`;
+- índice por `registration_number` (já coberto pelo único por campus);
 - índice por `(distribution_id, student_id)` em entrega;
 - índice único parcial: uma única entrega `REGULAR` com `status = 'VALIDA'` por `(distribution_id, student_id)`;
 - `delivery_type ∈ {REGULAR, EXCEDENTE}`;
@@ -211,7 +211,7 @@ A restrição única parcial deve ser criada no banco, não apenas na interface.
 | Painel inicial | todos | distribuição atual, totais e atalhos por permissão |
 | Estudantes | administrador | listar, buscar, ativar/inativar, importar |
 | Importar estudantes | administrador | enviar CSV/XLSX, mapear colunas, validar prévia, confirmar e baixar erros |
-| QR Codes | administrador | gerar/rotacionar token e exportar folha de impressão |
+| QR Codes | administrador | gerar (matrícula do aluno) e exportar folha de impressão |
 | Cardápios | admin/operador | cadastrar data, tipo, descrição e observação |
 | Distribuições | admin/operador | criar, abrir, encerrar, visualizar histórico |
 | Operação de entrega | operador | campo focado para scanner, botão de câmera, feedback grande, totais ao vivo |
@@ -276,7 +276,7 @@ Para duplicidade, `previousDelivery` contém ao menos data/hora e tipo da entreg
 - **Backend e páginas:** Django 5 + Python.
 - **Banco:** PostgreSQL.
 - **UI:** Django templates + HTMX + Tailwind CSS.
-- **Geração de QR:** biblioteca Python, com token aleatório armazenado como hash.
+- **Geração de QR:** biblioteca Python; o conteúdo é a matrícula do estudante.
 - **PWA:** manifesto, ícones, HTTPS e cache somente de recursos estáticos inicialmente.
 - **Hospedagem:** container Docker, aplicação web e PostgreSQL gerenciado ou com backup automatizado.
 
@@ -297,8 +297,8 @@ Django Admin reduz o esforço de administração de estudantes, usuários, turma
 ## 10. Segurança, LGPD e operação
 
 1. Usar HTTPS em todos os ambientes não locais.
-2. QR Code deve ser token de alta entropia, revogável/rotacionável; guardar somente o hash quando possível.
-3. Senhas com hash forte gerenciado pelo Django; nunca registrar senha, token bruto ou dados pessoais em logs.
+2. QR Code codifica a matrícula do estudante; a matrícula é identificador, **não** segredo, e por isso a antifraude se apoia em aluno ativo, escopo de campus e entrega regular única por distribuição.
+3. Senhas com hash forte gerenciado pelo Django; nunca registrar senha ou dados pessoais em logs.
 4. Aplicar autorização por campus em toda consulta e mutação.
 5. Implementar backups testados do banco e política de retenção definida pelo campus.
 6. Exportações devem exigir permissão e conter somente colunas necessárias.
@@ -369,7 +369,7 @@ Django Admin reduz o esforço de administração de estudantes, usuários, turma
 - [ ] Usuários, papéis e isolamento por campus
 - [ ] Turmas e estudantes ativos
 - [ ] Importação CSV/XLSX com validação
-- [ ] Token QR opaco, geração e exportação
+- [ ] QR Code com a matrícula, geração e exportação
 - [ ] Cardápio simples
 - [ ] Criar, abrir e encerrar distribuição
 - [ ] Leitura USB/câmera e entrega regular automática

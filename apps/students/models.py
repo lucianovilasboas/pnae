@@ -36,8 +36,6 @@ class Student(models.Model):
         null=True,
         blank=True,
     )
-    # Somente o hash HMAC-SHA256 do token; o token bruto nunca é persistido.
-    qr_token_hash = models.CharField("hash do token QR", max_length=128, blank=True, db_index=True)
     active = models.BooleanField("ativo", default=True)
     created_at = models.DateTimeField("criado em", auto_now_add=True)
     updated_at = models.DateTimeField("atualizado em", auto_now=True)

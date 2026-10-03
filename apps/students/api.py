@@ -19,7 +19,7 @@ from apps.campus.selectors import resolve_campus
 
 from .importers import RosterFormatError, missing_group_names
 from .models import ImportJob, ImportJobStatus
-from .qr import assign_tokens, qr_data_uri, students_for_qr
+from .qr import qr_data_uri, students_for_qr
 from .services import apply_import, create_import_preview
 
 
@@ -163,8 +163,8 @@ _QR_SHEET = """<!DOCTYPE html>
   }}
 </style></head><body>
 <div class="no-print">
-  <p>Atenção: esta exportação <strong>rotaciona</strong> os tokens dos {count} estudantes
-  listados. QR Codes impressos antes deixam de valer.</p>
+  <p>Folha de {count} QR Codes (o conteúdo é a matrícula do estudante).
+  Confira a lista antes de imprimir.</p>
   <button onclick="window.print()">Imprimir</button>
 </div>
 <div class="grid">
@@ -193,10 +193,7 @@ def qr_export(request):
     if class_group_id:
         class_group = get_object_or_404(ClassGroup, pk=class_group_id, campus=campus)
 
-    only_missing = request.POST.get("only_missing") in {"1", "true", "on"}
-
-    students = students_for_qr(campus, class_group=class_group, only_missing=only_missing)
-    generated = assign_tokens(students)
+    students = students_for_qr(campus, class_group=class_group)
 
     record_event(
         action="students.qr.exported",
@@ -204,17 +201,17 @@ def qr_export(request):
         entity_id=campus.pk,
         actor=request.user,
         campus=campus,
-        metadata={"count": len(generated), "rotated": not only_missing},
+        metadata={"count": len(students)},
     )
 
     cards = "\n".join(
         _CARD.format(
-            img=qr_data_uri(token),
+            img=qr_data_uri(student.registration_number),
             name=escape(student.full_name),
             registration=escape(student.registration_number),
             class_name=escape(student.class_group.label if student.class_group else "—"),
         )
-        for student, token in generated
+        for student in students
     )
-    html = _QR_SHEET.format(count=len(generated), cards=cards)
+    html = _QR_SHEET.format(count=len(students), cards=cards)
     return HttpResponse(html, content_type="text/html; charset=utf-8")

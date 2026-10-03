@@ -10,7 +10,7 @@ class StudentAdmin(AuditedAdminMixin, admin.ModelAdmin):
     list_display = ("full_name", "registration_number", "campus", "class_group", "active")
     list_filter = ("campus", "class_group", "active")
     search_fields = ("full_name", "registration_number", "email")
-    readonly_fields = ("qr_token_hash", "created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(ImportJob)

@@ -28,8 +28,6 @@ Gere os segredos:
 
 `python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(50))"`
 
-`python3 -c "import secrets; print('QR_PEPPER=' + secrets.token_urlsafe(32))"`
-
 `python3 -c "import secrets; print('POSTGRES_PASSWORD=' + secrets.token_hex(24))"`
 
 ### A3. Editar o `.env`
@@ -45,8 +43,6 @@ Deixe exatamente estes valores (troque só os segredos e a senha):
 `USE_HTTPS_PROXY=True`
 
 `SECRET_KEY=<o valor gerado em A2>`
-
-`QR_PEPPER=<o valor gerado em A2>`
 
 `DATABASE_URL=postgres://django_user:SENHA@db:5432/django_db`
 
@@ -95,8 +91,6 @@ Mesmos passos, sem script. Um comando por linha.
 `cp .env.example .env`
 
 `python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(50))"`
-
-`python3 -c "import secrets; print('QR_PEPPER=' + secrets.token_urlsafe(32))"`
 
 Edite o `.env` com `DEBUG=False`, `USE_HTTPS_PROXY=True`, o domínio em
 `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS`, a `DATABASE_URL`/`POSTGRES_PASSWORD`

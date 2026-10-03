@@ -42,15 +42,14 @@ unique (campus_id, name, academic_year)
 
 ### Student (`apps/students`)
 ```text
-id, campus_id FK, registration_number, full_name, email,
-class_group_id FK (nullable), qr_token_hash, active,
+id, campus_id FK, registration_number, full_name, email, cpf,
+class_group_id FK (nullable), active,
 created_at, updated_at
 unique (campus_id, registration_number)
-index  (qr_token_hash)          # busca da leitura
 ```
-- `registration_number`, `full_name` são os únicos dados pessoais usados na
-  operação; QR guarda **somente** `qr_token_hash`.
-- `email` opcional no MVP.
+- O QR codifica `registration_number` (matrícula), que é o identificador único
+  por campus usado na leitura; nome e CPF **não** aparecem no QR.
+- `email` é usado pelo portal do aluno (opcional no MVP).
 
 ### User (`apps/accounts`)
 ```text
@@ -129,10 +128,10 @@ total_rows, imported_rows, rejected_rows, error_report_path null
 
 Criadas em migrations `RunSQL`/`AddConstraint`, não só na interface:
 
-1. `unique (campus_id, registration_number)` em `Student`.
-2. índice em `Student.qr_token_hash`.
-3. índice em `Delivery (distribution_id, student_id)`.
-4. **índice único parcial** — a regra mais importante do MVP:
+1. `unique (campus_id, registration_number)` em `Student` — sustenta a busca
+   pela matrícula na leitura.
+2. índice em `Delivery (distribution_id, student_id)`.
+3. **índice único parcial** — a regra mais importante do MVP:
    ```sql
    CREATE UNIQUE INDEX uniq_regular_ativa
      ON distributions_delivery (distribution_id, student_id)
@@ -140,28 +139,25 @@ Criadas em migrations `RunSQL`/`AddConstraint`, não só na interface:
    ```
    Protege contra duas leituras concorrentes do mesmo QR. Excedente fica fora do
    índice (pode coexistir com a regular).
-5. `CHECK (delivery_type IN ('REGULAR','EXCEDENTE'))` e
+4. `CHECK (delivery_type IN ('REGULAR','EXCEDENTE'))` e
    `CHECK (status IN ('VALIDA','ESTORNADA'))`.
-6. `CHECK` de excedente: `delivery_type <> 'EXCEDENTE' OR (reason IS NOT NULL
+5. `CHECK` de excedente: `delivery_type <> 'EXCEDENTE' OR (reason IS NOT NULL
    AND authorized_by_id IS NOT NULL)`.
-7. índice único parcial para uma única `Distribution` `OPEN` por
+6. índice único parcial para uma única `Distribution` `OPEN` por
    `(campus_id, service_date, meal_type)`.
 
-## 5. Token QR — decisão de hash
+## 5. QR — decisão de conteúdo (RN-07)
 
-Necessidade: gerar token opaco de alta entropia, **buscar pelo hash** na leitura
-e não guardar o token bruto (RN-07 / LGPD).
-
-- **Escolha:** `qr_token_hash = HMAC-SHA256(pepper_secret, token)` em
-  hexadecimal/Base64 URL-safe.
-  - `token`: ≥ 160 bits de aleatoriedade (`secrets.token_urlsafe`).
-  - `pepper_secret`: em `.env`, fora do banco; permite revogação por rotação.
-- Por que HMAC e não `make_password`: o hash de senha (bcrypt/argon2) tem salt
-  aleatório e **não** permite lookup direto por igualdade. HMAC-SHA256 com
-  pepper é determinístico (buscável) e, com token de alta entropia, não é
-  atacável por dicionário sem o pepper.
-- Rotação/revogação: gerar novo token e substituir o hash do estudante; o token
-  antigo deixa de existir. Não manter histórico de tokens válidos no MVP.
+- **Conteúdo do QR:** `Student.registration_number` (matrícula), identificador
+  único por campus. A leitura busca por `(campus_id, registration_number)`.
+- A matrícula é **identificador, não segredo**: não há token opaco nem hash no
+  banco (a antiga `qr_token_hash` foi removida). A antifraude se apoia em aluno
+  `active`, escopo de campus e no índice único parcial de entrega regular.
+- **Consequência assumida:** matrículas são curtas/sequenciais; quem souber uma
+  matrícula consegue montar o QR. Aceito explicitamente para simplificar o
+  crachá e o portal do aluno (ver ADR-009 em `06-decisoes-abertas.md`).
+- Nota histórica: o desenho anterior (token opaco de 160 bits + HMAC com
+  `QR_PEPPER`) foi substituído; a `QR_PEPPER` deixa de ser usada.
 
 ## 6. Estorno — modelagem
 
@@ -175,7 +171,7 @@ própria `Delivery`, registrada também em `AuditEvent`:
 - indicadores operacionais contam apenas `status = VALIDA`;
 - relatórios de controle exibem ambos.
 
-Após estorno, o índice único parcial (§4.4) libera nova entrega regular para o
+Após estorno, o índice único parcial (§4.3) libera nova entrega regular para o
 mesmo estudante na mesma distribuição — comportamento desejado.
 
 ## 7. Migrations — ordem prevista

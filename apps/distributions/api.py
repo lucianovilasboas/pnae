@@ -23,7 +23,6 @@ from apps.accounts.decorators import (
 )
 from apps.campus.selectors import resolve_campus
 from apps.students.models import Student
-from apps.students.tokens import hash_token
 
 from . import services
 from .models import Delivery, Distribution, DistributionStatus
@@ -176,7 +175,7 @@ def distribution_extras(request, pk):
     student = (
         Student.objects.filter(
             campus_id=distribution.campus_id,
-            qr_token_hash=hash_token(data.get("token", "") or ""),
+            registration_number=data.get("token", "") or "",
         )
         .select_related("class_group")
         .first()

@@ -60,7 +60,7 @@ turmas e faz upsert por matrícula (idempotente).
 
 ## 6. Deploy (produção)
 
-1. `cp .env.example .env` e preencher (em especial `SECRET_KEY`, `QR_PEPPER`,
+1. `cp .env.example .env` e preencher (em especial `SECRET_KEY`,
    `DATABASE_URL`, `ALLOWED_HOSTS`, `USE_HTTPS_PROXY=True`,
    `CSRF_TRUSTED_ORIGINS=https://<domínio>`).
 2. `docker compose up -d --build` (o `entrypoint.sh` roda `migrate` e
@@ -109,6 +109,5 @@ em iOS/Safari e Android/Chrome. Ver `static/vendor/zxing/README.txt`.
 ## 9. Hardening antes do piloto
 
 - `DEBUG=False`, `ALLOWED_HOSTS` restrito, HTTPS e cookies seguros.
-- `QR_PEPPER` forte e exclusivo do ambiente; nunca versionado.
 - `SECRET_KEY` forte; banco sem portas expostas em produção.
 - Rodar `python manage.py check --deploy` e tratar os avisos.

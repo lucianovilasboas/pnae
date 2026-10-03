@@ -9,7 +9,6 @@ from django.utils import timezone
 from apps.accounts.models import User, UserRole
 from apps.campus.models import Campus, ClassGroup
 from apps.students.models import Student
-from apps.students.tokens import generate_token, hash_token
 
 from . import services
 from .models import (
@@ -21,18 +20,14 @@ from .models import (
 )
 
 
-def make_student(campus, group, registration, name, token=None, active=True):
-    student = Student.objects.create(
+def make_student(campus, group, registration, name, active=True):
+    return Student.objects.create(
         campus=campus,
         registration_number=registration,
         full_name=name,
         class_group=group,
         active=active,
     )
-    if token is not None:
-        student.qr_token_hash = hash_token(token)
-        student.save(update_fields=["qr_token_hash"])
-    return student
 
 
 class DistributionFixture(TestCase):
@@ -57,10 +52,8 @@ class DistributionFixture(TestCase):
             can_authorize_extras=True,
             can_reverse_deliveries=True,
         )
-        self.token = generate_token()
-        self.student = make_student(
-            self.campus, self.group, "2026001", "Ana Silva", token=self.token
-        )
+        self.student = make_student(self.campus, self.group, "2026001", "Ana Silva")
+        self.token = self.student.registration_number  # o QR carrega a matrícula
         self.distribution = Distribution.objects.create(
             campus=self.campus,
             service_date=timezone.localdate(),
@@ -271,10 +264,8 @@ class ConcurrentScanTests(TransactionTestCase):
             campus=self.campus,
             role=UserRole.OPERATOR,
         )
-        self.token = generate_token()
-        self.student = make_student(
-            self.campus, self.group, "2026001", "Ana Silva", token=self.token
-        )
+        self.student = make_student(self.campus, self.group, "2026001", "Ana Silva")
+        self.token = self.student.registration_number
         self.distribution = Distribution.objects.create(
             campus=self.campus,
             service_date=timezone.localdate(),
@@ -332,9 +323,8 @@ class ReportTests(DistributionFixture):
             recorded_by=self.authorizer,
             authorized_by=self.authorizer,
         )
-        token2 = generate_token()
-        s2 = make_student(self.campus, self.group, "2026002", "Bruno Souza", token=token2)
-        self._scan(token2)
+        s2 = make_student(self.campus, self.group, "2026002", "Bruno Souza")
+        self._scan(s2.registration_number)
         d2 = Delivery.objects.get(distribution=self.distribution, student=s2)
         services.reverse_delivery(delivery=d2, reason="Erro de leitura", user=self.authorizer)
 

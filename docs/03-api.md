@@ -12,7 +12,7 @@ assíncrona exigir (`/scan`, `summary`, `pending`, importação).
 - Erros: JSON `{"detail": "...", "code": "..."}` com status HTTP coerente.
 - Todas as rotas filtram por `campus_id` do usuário (admin global é exceção).
 - Datas/horas em ISO-8601 com offset; armazenamento em UTC.
-- Nenhuma resposta devolve token QR nem dados sensíveis além do necessário.
+- Nenhuma resposta devolve dados sensíveis além do necessário.
 
 ## 2. Rotas
 
@@ -24,7 +24,7 @@ assíncrona exigir (`/scan`, `summary`, `pending`, importação).
 | `POST /api/distributions` | criar rascunho | valida data/refeição |
 | `POST /api/distributions/{id}/open` | abrir distribuição | `DRAFT → OPEN` |
 | `POST /api/distributions/{id}/close` | encerrar distribuição | `OPEN → CLOSED` |
-| `POST /api/distributions/{id}/scan` | ler token e tentar entrega regular | **atômico** |
+| `POST /api/distributions/{id}/scan` | ler matrícula e tentar entrega regular | **atômico** |
 | `POST /api/distributions/{id}/extras` | registrar excedente autorizado | exige autorizador |
 | `POST /api/deliveries/{id}/reverse` | estornar entrega | exige motivo |
 | `GET /api/distributions/{id}/summary` | totais ao vivo | painel |
@@ -38,7 +38,7 @@ assíncrona exigir (`/scan`, `summary`, `pending`, importação).
 
 Payload:
 ```json
-{ "token": "<token opaco lido do QR>", "device": "usb-scanner-1" }
+{ "token": "<matrícula lida do QR>", "device": "usb-scanner-1" }
 ```
 
 Resposta (sempre 200 quando a requisição é válida; o resultado vai no corpo):
@@ -75,7 +75,7 @@ Sequência no service (dentro de `transaction.atomic()`):
 1. validar payload e permissão;
 2. carregar `Distribution` do campus do usuário; se não `OPEN` →
    `DISTRIBUTION_CLOSED`;
-3. `hash = HMAC-SHA256(pepper, token)`; buscar `Student` por `qr_token_hash`;
+3. buscar `Student` por `(campus_id, registration_number=token)`;
    não achou → `INVALID_TOKEN`;
 4. se `Student.active` falso ou campus diferente → `INELIGIBLE`;
 5. tentar inserir `Delivery REGULAR VALIDA`;
@@ -102,7 +102,7 @@ linhas afetadas (`RETURNING`).
 ## 6. `POST /api/distributions/{id}/extras`
 
 ```json
-{ "token": "<opaco>",   "reason": "Segunda refeição autorizada pela coordenação" }
+{ "token": "<matrícula>",   "reason": "Segunda refeição autorizada pela coordenação" }
 ```
 - Exige `can_authorize_extras` (ou `ADMIN`); exige `reason` não vazio.
 - Cria `Delivery EXCEDENTE VALIDA` com `authorized_by` = usuário atual e

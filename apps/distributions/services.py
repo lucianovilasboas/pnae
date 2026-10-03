@@ -15,7 +15,6 @@ from apps.audit.services import record_event
 from apps.dates import MAX_BULK_ROWS, iter_dates
 from apps.menus.models import Menu
 from apps.students.models import Student
-from apps.students.tokens import hash_token
 
 from .models import (
     Delivery,
@@ -194,7 +193,7 @@ def record_scan(*, distribution, token, user):
 
     student = (
         Student.objects.filter(
-            campus_id=distribution.campus_id, qr_token_hash=hash_token(token)
+            campus_id=distribution.campus_id, registration_number=token
         )
         .select_related("class_group")
         .first()

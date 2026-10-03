@@ -115,11 +115,6 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# -- Domínio PNAE ------------------------------------------------------
-# Pepper (segredo) do HMAC usado no hash do token QR. Nunca o mesmo valor
-# entre ambientes; nunca versionado.
-QR_PEPPER = config("QR_PEPPER", default="")
-
 # -- Proxy / CSRF ------------------------------------------------------
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
 USE_HTTPS_PROXY = config("USE_HTTPS_PROXY", default=False, cast=bool)

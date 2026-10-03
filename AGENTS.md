@@ -68,14 +68,15 @@ Vêm do plano do MVP e **não podem** ser afrouxadas na implementação:
 - excedente exige justificativa, operador solicitante e autorizador;
 - estorno não apaga o registro original; correções são sempre por status +
   auditoria;
-- QR é token opaco de alta entropia; nunca expõe nome, matrícula ou CPF;
+- QR codifica a matrícula do estudante (identificador único por campus); não
+  expõe nome nem CPF;
 - toda operação relevante gera `AuditEvent`.
 
 ## Dados e LGPD
 
 - Nunca versionar bases reais de estudantes, `.env` ou segredos.
 - Usar apenas dados **anonimizados** em testes e exemplos.
-- Não registrar token bruto de QR nem dados pessoais em logs.
+- Não registrar dados pessoais (nem senhas) em logs.
 
 ## Escopo
 

@@ -31,7 +31,7 @@ proposto** para não travar a implementação; confirmar antes do piloto.
 
 ### ADR-002 — Token QR como HMAC-SHA256 com pepper
 
-- **Status:** aceito (ver `02-modelo-dados.md` §5).
+- **Status:** substituído pelo ADR-009 (o QR passou a codificar a matrícula).
 - **Contexto:** precisa buscar pelo hash na leitura e não guardar o token.
 - **Decisão:** `HMAC-SHA256(pepper, token)`, token com ≥ 160 bits.
 - **Consequência:** lookup determinístico; pepper no ambiente; rotação revoga.
@@ -68,7 +68,7 @@ proposto** para não travar a implementação; confirmar antes do piloto.
 
 ### ADR-007 — QR permanece token opaco; matrícula é exibida, não codificada
 
-- **Status:** aceito.
+- **Status:** substituído pelo ADR-009.
 - **Contexto:** desejo de usar a matrícula como identificador do QR. A matrícula
   é curta/sequencial; se for o segredo, torna-se forjável e contraria a RN-07
   ("QR contém token aleatório/opaco; matrícula nunca codificada") e o doc 07 §4.
@@ -86,7 +86,20 @@ proposto** para não travar a implementação; confirmar antes do piloto.
   - login do aluno por **e-mail + senha definida no primeiro acesso**;
   - cardápio só aparece ao aluno quando o operador marcar uma **flag de
     publicação** no `Menu` (controle explícito, não automático por data);
-  - o portal mostrará o **QR (token opaco) + a matrícula** como número.
+  - o portal mostrará o **QR (matrícula) + o número** em destaque.
 - **Consequência:** exige modelar autenticação própria do aluno (conta separada
   vinculada a `Student`), campo de publicação em `Menu` e base legal LGPD antes
   de implementar.
+
+### ADR-009 — QR codifica a matrícula do estudante
+
+- **Status:** aceito (supersede ADR-002 e ADR-007).
+- **Contexto:** o aluno passa a usar o próprio celular como crachá e o QR deve
+  ser simples de exibir (portal, folha impressa) sem segredo por aluno.
+- **Decisão:** o conteúdo do QR é `Student.registration_number`; a leitura
+  busca por `(campus_id, registration_number)`. A `qr_token_hash` e o token
+  opaco foram removidos.
+- **Consequência assumida:** a matrícula é adivinhável (baixa entropia), então
+  o QR **não é segredo** — a antifraude se apoia em aluno `active`, escopo de
+  campus e no índice único parcial de entrega regular. RN-07 e o doc 07 §4 foram
+  atualizados; os crachás antigos (token) foram reimpressos.

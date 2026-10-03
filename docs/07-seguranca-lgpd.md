@@ -6,16 +6,16 @@ Controles concretos para o §10 do [plano do MVP](../plano_mvp_ifmg_alimenta.md)
 
 - HTTPS obrigatório em todo ambiente não local (TLS no Traefik).
 - `.env` nunca versionado (só `.env.example`); segredos fora do repositório.
-- `SECRET_KEY`, `pepper` do QR e senha do banco vindos do ambiente.
+- `SECRET_KEY` e senha do banco vindos do ambiente.
 - Nada de segredo em código, template ou log.
 
-## 2. Token QR
+## 2. QR do estudante
 
-- Token opaco com ≥ 160 bits de aleatoriedade (`secrets.token_urlsafe`).
-- Armazenamento somente do `HMAC-SHA256(pepper, token)` (ver
-  `02-modelo-dados.md` §5).
-- Nunca registrar o token bruto em log, banco ou resposta HTTP.
-- Revogável/rotacionável por substituição do hash.
+- O QR codifica a **matrícula** (identificador único por campus), que **não é
+  segredo** (ver ADR-009 e `02-modelo-dados.md` §5).
+- A antifraude não depende de sigilo do QR: apoia-se em aluno `active`, escopo
+  de campus e no índice único parcial de entrega regular.
+- Nenhum token/segredo por aluno é armazenado.
 
 ## 3. Autenticação e autorização
 
@@ -30,7 +30,7 @@ Controles concretos para o §10 do [plano do MVP](../plano_mvp_ifmg_alimenta.md)
 
 ## 4. Minimização (LGPD)
 
-- QR não contém nome, matrícula, CPF nem turma.
+- QR contém a matrícula (identificador), mas **não** nome, CPF nem turma.
 - Operação exibe apenas nome/matrícula/turma, o mínimo para reduzir erro.
 - Exportações exigem permissão e retornam só as colunas necessárias.
 - `AuditEvent.metadata_json` guarda o essencial (sem dado pessoal excessivo).
@@ -71,7 +71,7 @@ Eventos são imutáveis: sem `UPDATE`/`DELETE` na aplicação.
 - [ ] `DEBUG=False`; `ALLOWED_HOSTS` restrito.
 - [ ] Segredos fora do repositório; `.env` não versionado.
 - [ ] Permissões por campus verificadas em todas as rotas.
-- [ ] Token QR bruto ausente de logs e respostas.
+- [ ] Nenhum dado pessoal (nome/CPF/senha) em logs e respostas.
 - [ ] Teste de concorrência verde (ver `05-testes.md`).
 - [ ] Backup + restauração testados.
 - [ ] Responsável institucional pelos dados e base legal definidos (§10.7).

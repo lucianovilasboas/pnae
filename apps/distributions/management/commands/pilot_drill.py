@@ -1,6 +1,6 @@
 """Ensaio operacional: simula uma sessão de distribuição com volume.
 
-Cria estudantes sintéticos (prefixo DRILL-), gera tokens, executa leituras
+Cria estudantes sintéticos (prefixo DRILL-), usa a matrícula como QR, executa leituras
 (incluindo duplicidades, excedente e estorno) e confere a coerência dos totais.
 Não toca nos token/QR dos estudantes reais.
 
@@ -20,7 +20,6 @@ from apps.campus.selectors import resolve_campus
 from apps.distributions import services
 from apps.distributions.models import DeliveryStatus, DeliveryType
 from apps.menus.models import MealType
-from apps.students import qr
 from apps.students.models import Student
 
 DRILL_GROUP = "DRILL"
@@ -64,11 +63,11 @@ class Command(BaseCommand):
         )
         services.open_distribution(distribution=distribution, user=operator)
 
-        # 1. Uma leitura por estudante.
+        # 1. Uma leitura por estudante (o código do QR é a matrícula).
         tokens = {}
         delivered = 0
         for student in students:
-            _, tokens[student.pk] = qr.assign_tokens([student])[0]
+            tokens[student.pk] = student.registration_number
             result = services.record_scan(
                 distribution=distribution, token=tokens[student.pk], user=operator
             )
