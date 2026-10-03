@@ -448,9 +448,10 @@ class OperationLayoutTests(DistributionFixture):
             reverse("distributions:operation", args=[self.distribution.pk])
         ).content.decode()
 
-    def test_campo_tem_botao_confirmar_ao_lado(self):
+    def test_campo_tem_botao_ok_ao_lado(self):
         self.assertIn('id="scan-confirm"', self.body)
-        self.assertIn("Confirmar", self.body)
+        self.assertIn("min-w-0", self.body)  # o campo pode encolher; linha não estoura
+        self.assertIn("OK", self.body)
 
     def test_camera_em_largura_total(self):
         self.assertIn("h-64 w-full", self.body)
