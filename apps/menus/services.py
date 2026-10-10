@@ -12,6 +12,33 @@ class MenuStateError(ValueError):
     pass
 
 
+def create_menu(*, campus, user, service_date, meal_type, description, notes=""):
+    """Cria um cardápio único (respeita o único campus/data/refeição)."""
+    try:
+        with transaction.atomic():
+            menu = Menu.objects.create(
+                campus=campus,
+                service_date=service_date,
+                meal_type=meal_type,
+                description=description,
+                notes=notes,
+                created_by=user,
+            )
+    except IntegrityError as exc:
+        raise MenuStateError(
+            "Já existe um cardápio para este campus, data e refeição."
+        ) from exc
+    record_event(
+        action="menu.created",
+        entity_type="Menu",
+        entity_id=menu.pk,
+        actor=user,
+        campus=campus,
+        metadata={"serviceDate": str(service_date), "mealType": meal_type},
+    )
+    return menu
+
+
 def plan_menus_bulk(*, campus, start_date, end_date, weekdays, meal_type):
     """Datas a criar e datas já existentes, sem gravar nada."""
     to_create, existing = [], []

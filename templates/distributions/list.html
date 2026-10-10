@@ -10,44 +10,74 @@
     </a>
   </div>
 
-  <form method="post" class="mb-6 rounded-lg bg-white p-4 shadow sm:p-5">
+  <form id="nova" method="post" class="mb-6 rounded-lg bg-white p-4 shadow sm:p-5">
     {% csrf_token %}
     <input type="hidden" name="action" value="create">
     <h2 class="mb-3 font-semibold">Nova distribuição</h2>
-    <div class="grid gap-3 sm:grid-cols-2">
+
+    {% if show_campus_select %}
+      <label class="mb-3 block text-sm">Campus
+        <select name="campus" required class="mt-1 w-full rounded border border-slate-300 p-2 sm:max-w-xs">
+          <option value="">Selecione…</option>
+          {% for c in active_campuses %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
+        </select>
+      </label>
+    {% endif %}
+
+    {# Linha 1: data + horários previstos (só a hora; a data vem do campo Data). #}
+    <div class="grid gap-3 sm:grid-cols-3">
       <label class="text-sm">Data
-        <input type="date" name="service_date" required class="mt-1 w-full rounded border border-slate-300 p-2">
-      </label>
-      <label class="text-sm">Refeição
-        <select name="meal_type" class="mt-1 w-full rounded border border-slate-300 p-2">
-          {% for value, label in meal_types %}
-            <option value="{{ value }}" {% if value == 'SNACK' %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label class="text-sm sm:col-span-2">Cardápio (opcional)
-        <select name="menu" class="mt-1 w-full rounded border border-slate-300 p-2">
-          <option value="">Sem cardápio vinculado</option>
-          {% for menu in menus %}
-            <option value="{{ menu.pk }}">{{ menu.service_date }} — {{ menu.get_meal_type_display }}: {{ menu.description|truncatechars:40 }}</option>
-          {% endfor %}
-        </select>
+        <input type="date" name="service_date" id="new-service-date" required
+               value="{{ form.service_date }}"
+               class="mt-1 w-full rounded border border-slate-300 p-2">
       </label>
       <label class="text-sm">Início previsto
-        <input type="datetime-local" name="planned_start_at" required class="mt-1 w-full rounded border border-slate-300 p-2">
+        <input type="time" name="inicio" required value="{{ form.inicio }}"
+               class="mt-1 w-full rounded border border-slate-300 p-2">
       </label>
       <label class="text-sm">Fim previsto
-        <input type="datetime-local" name="planned_end_at" required class="mt-1 w-full rounded border border-slate-300 p-2">
+        <input type="time" name="fim" required value="{{ form.fim }}"
+               class="mt-1 w-full rounded border border-slate-300 p-2">
       </label>
     </div>
+
+    {# Linha 2: refeição + cardápio (com atalho para cadastrar). #}
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <div class="text-sm">
+        <label for="new-meal-type">Refeição</label>
+        <select name="meal_type" id="new-meal-type"
+                class="mt-1 w-full rounded border border-slate-300 p-2">
+          {% for value, label in meal_types %}
+            <option value="{{ value }}"
+              {% if form.meal_type == value %}selected{% elif not form.meal_type and value == 'SNACK' %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="text-sm">
+        <label for="new-menu">Cardápio (opcional)</label>
+        <div class="mt-1 flex items-stretch gap-2">
+          <select name="menu" id="new-menu" class="w-full rounded border border-slate-300 p-2">
+            <option value="">Sem cardápio vinculado</option>
+            {% for menu in menus %}
+              <option value="{{ menu.pk }}"
+                {% if form.menu and form.menu == menu.pk %}selected{% endif %}>{{ menu.service_date }} — {{ menu.get_meal_type_display }}: {{ menu.description|truncatechars:40 }}</option>
+            {% endfor %}
+          </select>
+          <button type="button" id="menu-dialog-open" data-target-select="new-menu"
+                  aria-label="Cadastrar cardápio" title="Cadastrar cardápio"
+                  class="inline-flex shrink-0 items-center justify-center rounded border border-emerald-300 px-3 text-lg font-medium text-emerald-700 hover:bg-emerald-50">+</button>
+        </div>
+      </div>
+    </div>
+
     <button type="submit"
             class="mt-4 w-full rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 sm:w-auto">
       Criar rascunho
     </button>
-    <a href="{% url 'menus:list' %}" class="mt-2 block text-sm text-emerald-700 hover:underline sm:mt-0 sm:ml-3 sm:inline">
-      Cadastrar cardápio
-    </a>
   </form>
+
+  {# Pop-up para criar um cardápio único sem sair da tela. #}
+  {% include "distributions/_menu_dialog.html" %}
 
   <form method="get" class="mb-4 grid gap-2 rounded-lg bg-white p-3 shadow sm:grid-cols-5">
     <label class="text-xs">De

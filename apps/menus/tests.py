@@ -79,13 +79,51 @@ class DistributionMenuTests(TestCase):
                 "service_date": str(timezone.localdate()),
                 "meal_type": "SNACK",
                 "menu": self.menu.pk,
-                "planned_start_at": "2026-10-02T15:00",
-                "planned_end_at": "2026-10-02T16:00",
+                "inicio": "15:00",
+                "fim": "16:00",
             },
         )
         distribution = Distribution.objects.get()
         self.assertEqual(distribution.menu, self.menu)
         self.assertEqual(distribution.meal_type, MealType.SNACK)
+        # A hora é combinada com a data escolhida (fuso local).
+        self.assertEqual(
+            timezone.localtime(distribution.planned_start_at).strftime("%H:%M"),
+            "15:00",
+        )
+
+    def test_cardapio_retorna_para_distribuicao(self):
+        """O formulário de cardápio volta à distribuição quando recebe `voltar`."""
+        self.client.force_login(self.operator)
+        # Data diferente do cardápio do setUp (hoje), pela unicidade campus+data+refeição.
+        destino = reverse("distributions:list") + "?data=2026-10-11&refeicao=SNACK#nova"
+        response = self.client.post(
+            reverse("menus:list"),
+            {
+                "service_date": "2026-10-11",
+                "meal_type": "SNACK",
+                "description": "Lanche do dia",
+                "voltar": destino,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], destino)
+        self.assertTrue(Menu.objects.filter(description="Lanche do dia").exists())
+
+    def test_gestor_nao_retorna_para_url_externa(self):
+        """`voltar` só aceita destino interno (sem open redirect)."""
+        self.client.force_login(self.operator)
+        response = self.client.post(
+            reverse("menus:list"),
+            {
+                "service_date": "2026-10-11",
+                "meal_type": "SNACK",
+                "description": "Lanche",
+                "voltar": "https://evil.example.org/",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("menus:list"))
 
 
 class BulkMenuTests(TestCase):
@@ -230,3 +268,63 @@ class MenuEditDeleteTests(TestCase):
         pk = self.menu.pk
         delete_menu(menu=self.menu, user=self.operator)
         self.assertFalse(Menu.objects.filter(pk=pk).exists())
+
+
+class MenuApiTests(TestCase):
+    """Criação de cardápio único pelo pop-up da tela de distribuições."""
+
+    def setUp(self):
+        self.campus = Campus.objects.create(name="Campus Teste", code="TST")
+        self.operator = User.objects.create_user(
+            email="op@example.org", password="x", name="Operador",
+            campus=self.campus, role=UserRole.OPERATOR,
+        )
+        self.url = reverse("menus_api:create")
+
+    def _post(self, **kw):
+        return self.client.post(self.url, data=kw, content_type="application/json")
+
+    def test_cria_cardapio_json(self):
+        self.client.force_login(self.operator)
+        response = self._post(
+            service_date="2026-10-20", meal_type="SNACK", description="Lanche"
+        )
+        self.assertEqual(response.status_code, 201)
+        body = response.json()
+        self.assertEqual(body["mealType"], "SNACK")
+        self.assertIn("label", body)
+        self.assertTrue(Menu.objects.filter(campus=self.campus, description="Lanche").exists())
+
+    def test_duplicado_retorna_409(self):
+        self.client.force_login(self.operator)
+        self._post(service_date="2026-10-20", meal_type="SNACK", description="Lanche")
+        response = self._post(
+            service_date="2026-10-20", meal_type="SNACK", description="Outro"
+        )
+        self.assertEqual(response.status_code, 409)
+
+    def test_sem_descricao_retorna_400(self):
+        self.client.force_login(self.operator)
+        response = self._post(service_date="2026-10-20", meal_type="SNACK", description="")
+        self.assertEqual(response.status_code, 400)
+
+    def test_admin_global_informa_campus(self):
+        Campus.objects.create(name="Outro", code="OUT")  # 2º campus ativo → ambíguo
+        admin = User.objects.create_superuser(
+            email="root@example.org", password="x", name="Root"
+        )
+        self.client.force_login(admin)
+        response = self._post(
+            service_date="2026-10-21", meal_type="SNACK",
+            description="Via campus explícito", campus=self.campus.pk,
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_gestor_nao_pode(self):
+        manager = User.objects.create_user(
+            email="gestor@example.org", password="x", name="Gestor",
+            campus=self.campus, role=UserRole.MANAGER,
+        )
+        self.client.force_login(manager)
+        response = self._post(service_date="2026-10-20", meal_type="SNACK", description="X")
+        self.assertEqual(response.status_code, 403)

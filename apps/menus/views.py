@@ -7,13 +7,27 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts.decorators import is_operator
 from apps.audit.services import record_event
+from apps.campus.models import Campus
 from apps.campus.selectors import resolve_campus
 
 from .models import MealType, Menu
-from .services import MenuStateError, delete_menu, update_menu
+from .services import MenuStateError, create_menu, delete_menu, update_menu
+
+
+def _safe_redirect(request, fallback):
+    """Redireciona para ``voltar`` (GET/POST) só se for destino interno seguro."""
+    target = request.POST.get("voltar") or request.GET.get("voltar")
+    if target and url_has_allowed_host_and_scheme(
+        target,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(target)
+    return redirect(fallback)
 
 
 @login_required
@@ -24,10 +38,6 @@ def menu_list(request):
     campus = resolve_campus(request.user, request)
 
     if request.method == "POST":
-        if campus is None:
-            messages.error(request, "Campus não definido.")
-            return redirect("menus:list")
-
         action = request.POST.get("action", "create")
 
         if action == "delete":
@@ -68,30 +78,29 @@ def menu_list(request):
                 )
             return redirect("menus:list")
 
+        if campus is None:
+            messages.error(request, "Selecione o campus para cadastrar o cardápio.")
+            return _safe_redirect(request, "menus:list")
+
         service_date = parse_date(request.POST.get("service_date", "") or "")
         meal_type = request.POST.get("meal_type") or MealType.SNACK
         description = (request.POST.get("description") or "").strip()
         if not (service_date and description):
             messages.error(request, "Informe a data e a descrição do cardápio.")
         else:
-            menu = Menu.objects.create(
-                campus=campus,
-                service_date=service_date,
-                meal_type=meal_type,
-                description=description,
-                notes=(request.POST.get("notes") or "").strip(),
-                created_by=request.user,
-            )
-            record_event(
-                action="menu.created",
-                entity_type="Menu",
-                entity_id=menu.pk,
-                actor=request.user,
-                campus=campus,
-                metadata={"serviceDate": str(service_date), "mealType": meal_type},
-            )
-            messages.success(request, "Cardápio cadastrado.")
-        return redirect("menus:list")
+            try:
+                create_menu(
+                    campus=campus,
+                    user=request.user,
+                    service_date=service_date,
+                    meal_type=meal_type,
+                    description=description,
+                    notes=(request.POST.get("notes") or "").strip(),
+                )
+                messages.success(request, "Cardápio cadastrado.")
+            except MenuStateError as exc:
+                messages.error(request, str(exc))
+        return _safe_redirect(request, "menus:list")
 
     queryset = Menu.objects.none()
     if campus is not None:
@@ -104,6 +113,16 @@ def menu_list(request):
     if ate:
         queryset = queryset.filter(service_date__lte=ate)
     queryset = queryset.order_by("-service_date", "meal_type")
+
+    # Só aceita `voltar` interno (evita open redirect / href inseguro).
+    voltar = request.GET.get("voltar", "")
+    if not (
+        voltar
+        and url_has_allowed_host_and_scheme(
+            voltar, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        )
+    ):
+        voltar = ""
 
     paginator = Paginator(queryset, 20)
     page = paginator.get_page(request.GET.get("page"))
@@ -118,8 +137,16 @@ def menu_list(request):
             "page": page,
             "querystring": query.urlencode(),
             "campus": campus,
+            "active_campuses": Campus.objects.filter(active=True).order_by("name"),
+            "show_campus_select": campus is None and Campus.objects.filter(active=True).exists(),
             "meal_types": MealType.choices,
             "filters": {"de": request.GET.get("de", ""), "ate": request.GET.get("ate", "")},
+            # Pré-preenchimento ao chegar da tela de Distribuições ("+").
+            "prefill": {
+                "service_date": request.GET.get("data", ""),
+                "meal_type": request.GET.get("refeicao", "").strip() or MealType.SNACK,
+                "voltar": voltar,
+            },
             "breadcrumbs": [
                 {"label": "Início", "url": "/"},
                 {"label": "Cardápios"},
