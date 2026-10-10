@@ -12,16 +12,31 @@
 
   <form method="post" class="mb-6 rounded-lg bg-white p-4 shadow sm:p-5">
     {% csrf_token %}
-    <h2 class="mb-3 font-semibold">Novo cardápio</h2>
+    <input type="hidden" name="voltar" value="{{ prefill.voltar }}">
+    {% if show_campus_select %}
+      <label class="mb-3 block text-sm">Campus
+        <select name="campus" required class="mt-1 w-full rounded border border-slate-300 p-2 sm:max-w-xs">
+          <option value="">Selecione…</option>
+          {% for c in active_campuses %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
+        </select>
+      </label>
+    {% endif %}
+    <h2 class="mb-3 font-semibold">
+      Novo cardápio
+      {% if prefill.voltar %}
+        <a href="{{ prefill.voltar }}" class="ms-2 text-sm font-normal text-emerald-700 hover:underline">← Voltar</a>
+      {% endif %}
+    </h2>
     <div class="grid gap-3 sm:grid-cols-2">
       <label class="text-sm">Data
-        <input type="date" name="service_date" required
+        <input type="date" name="service_date" required value="{{ prefill.service_date }}"
                class="mt-1 w-full rounded border border-slate-300 p-2">
       </label>
       <label class="text-sm">Refeição
         <select name="meal_type" class="mt-1 w-full rounded border border-slate-300 p-2">
           {% for value, label in meal_types %}
-            <option value="{{ value }}" {% if value == 'SNACK' %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ value }}"
+              {% if prefill.meal_type == value %}selected{% elif not prefill.meal_type and value == 'SNACK' %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </label>
@@ -35,10 +50,15 @@
                class="mt-1 w-full rounded border border-slate-300 p-2">
       </label>
     </div>
-    <button type="submit"
-            class="mt-4 w-full rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 sm:w-auto">
-      Salvar cardápio
-    </button>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      <button type="submit"
+              class="w-full rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 sm:w-auto">
+        Salvar cardápio
+      </button>
+      {% if prefill.voltar %}
+        <a href="{{ prefill.voltar }}" class="text-sm text-slate-500 hover:underline">Voltar à distribuição</a>
+      {% endif %}
+    </div>
   </form>
 
   <form method="get" class="mb-4 grid gap-2 rounded-lg bg-white p-3 shadow sm:grid-cols-3">

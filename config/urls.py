@@ -21,6 +21,7 @@ urlpatterns = [
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("api/students/", include("apps.students.urls")),
+    path("api/menus/", include("apps.menus.urls_api")),
     path("api/", include("apps.distributions.urls")),
     path("estudantes/", include("apps.students.urls_pages")),
     path("cardapios/", include("apps.menus.urls")),

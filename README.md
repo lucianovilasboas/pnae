@@ -127,6 +127,7 @@ Justificativa e alternativas descartadas em
 │   ├── 06-decisoes-abertas.md
 │   └── 07-seguranca-lgpd.md
 ├── AGENTS.md                    # convenções de trabalho do repositório
+├── CHANGELOG.md                 # histórico de versões
 └── README.md
 ```
 
@@ -141,6 +142,14 @@ Justificativa e alternativas descartadas em
 | [05-testes](docs/05-testes.md) | estratégia de testes e critérios de aceite |
 | [06-decisoes-abertas](docs/06-decisoes-abertas.md) | perguntas institucionais e ADRs pendentes |
 | [07-seguranca-lgpd](docs/07-seguranca-lgpd.md) | controles de segurança, LGPD e operação |
+
+## Versionamento
+
+A versão do sistema é uma constante única em `config/version.py`
+(`APP_VERSION`, SemVer) e aparece no **rodapé** (desktop) e no **menu**
+(mobile). Cada publicação registra uma entrada em
+[`CHANGELOG.md`](CHANGELOG.md). Ao publicar, atualize `APP_VERSION` e, se
+mudar estáticos, o `version` do service worker em `config/pwa.py`.
 
 ## Escopo do MVP
 

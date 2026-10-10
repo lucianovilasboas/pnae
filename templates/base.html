@@ -61,6 +61,9 @@
                     Sair ({{ user.get_short_name }})
                   </button>
                 </form>
+                <p class="px-3 pt-1 text-center text-[11px] text-emerald-200/80">
+                  PNAE [CPN] · v{{ app_version }}
+                </p>
               </div>
             </details>
           </div>
@@ -91,6 +94,10 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="mx-auto max-w-5xl px-4 pb-6 text-center text-xs text-slate-400">
+    PNAE [CPN] · v{{ app_version }}
+  </footer>
 
   {# Botão "Instalar app" (PWA). Aparece quando o navegador permitir. #}
   <div id="install-bar" class="fixed inset-x-0 bottom-0 z-40 hidden p-3">

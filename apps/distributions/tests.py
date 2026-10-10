@@ -759,3 +759,64 @@ class EditDeleteCancelTests(DistributionFixture):
         response = self.client.get(reverse("distributions:edit", args=[d.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Editar distribuição")
+
+
+class DistributionFormLayoutTests(DistributionFixture):
+    """Nova distribuição: horários só com a hora e atalho de cardápio."""
+
+    def test_formulario_usa_hora_e_atalho_de_cardapio(self):
+        self.client.force_login(self.operator)
+        body = self.client.get(reverse("distributions:list")).content.decode()
+        self.assertIn('type="time"', body)
+        self.assertIn('name="inicio"', body)
+        self.assertIn('name="fim"', body)
+        self.assertIn('aria-label="Cadastrar cardápio"', body)
+        self.assertNotIn('name="planned_start_at"', body)
+
+    def test_prefill_ao_voltar_dos_cardapios(self):
+        self.client.force_login(self.operator)
+        response = self.client.get(
+            reverse("distributions:list") + "?data=2026-10-10&refeicao=SNACK"
+        )
+        self.assertContains(response, 'value="2026-10-10"')
+
+    def test_pop_up_de_cardapio_presente(self):
+        self.client.force_login(self.operator)
+        body = self.client.get(reverse("distributions:list")).content.decode()
+        self.assertIn('id="menu-dialog"', body)
+        self.assertIn('id="menu-dialog-open"', body)
+        self.assertIn(reverse("menus_api:create"), body)
+
+    def test_seletor_de_campus_quando_ambiguo(self):
+        from apps.accounts.models import User as _User
+
+        Campus.objects.create(name="Outro Campus", code="OUT")  # 2º campus ativo
+        admin = _User.objects.create_superuser(
+            email="root@example.org", password="x", name="Root"
+        )
+        self.client.force_login(admin)
+        self.assertContains(self.client.get(reverse("distributions:list")), 'name="campus"')
+
+    def test_edicao_usa_hora(self):
+        d = Distribution.objects.create(
+            campus=self.campus,
+            service_date=timezone.localdate() + timedelta(days=3),
+            meal_type="SNACK",
+            planned_start_at=timezone.now(),
+            planned_end_at=timezone.now(),
+            status=DistributionStatus.DRAFT,
+        )
+        self.client.force_login(self.operator)
+        body = self.client.get(reverse("distributions:edit", args=[d.pk])).content.decode()
+        self.assertIn('name="inicio"', body)
+        self.assertIn('name="fim"', body)
+        self.assertNotIn('name="planned_start_at"', body)
+
+
+class VersionTests(DistributionFixture):
+    def test_versao_aparece_no_rodape_e_no_menu(self):
+        from config.version import APP_VERSION
+
+        self.client.force_login(self.operator)
+        body = self.client.get(reverse("distributions:home")).content.decode()
+        self.assertIn(f"v{APP_VERSION}", body)

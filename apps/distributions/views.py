@@ -10,10 +10,10 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.dateparse import parse_date, parse_datetime
+from django.utils.dateparse import parse_date
 
 from apps.accounts.decorators import can_reverse, is_operator
-from apps.campus.models import ClassGroup
+from apps.campus.models import Campus, ClassGroup
 from apps.campus.selectors import resolve_campus
 from apps.dates import WEEKDAY_LABELS, parse_weekdays
 from apps.menus.models import MealType, Menu
@@ -40,11 +40,21 @@ def _scoped_distributions(request):
     return campus, queryset.select_related("campus", "menu")
 
 
-def _aware(value):
-    """Interpreta datetime local (naive) no fuso corrente (RN-10)."""
-    if value is not None and timezone.is_naive(value):
-        return timezone.make_aware(value, timezone.get_current_timezone())
-    return value
+def _combine(service_date, hhmm):
+    """Combina a data do serviço com um horário ``HH:MM`` no fuso corrente (RN-10).
+
+    O formulário pede apenas o horário (a data já vem do campo Data); aqui as
+    duas partes viram um ``datetime`` consciente de fuso.
+    """
+    if not service_date or not hhmm:
+        return None
+    try:
+        parsed = datetime.strptime(hhmm, "%H:%M").time()
+    except (TypeError, ValueError):
+        return None
+    return timezone.make_aware(
+        datetime.combine(service_date, parsed), timezone.get_current_timezone()
+    )
 
 
 @login_required
@@ -105,6 +115,26 @@ def distribution_list(request):
     query = request.GET.copy()
     query.pop("page", None)
 
+    # Pré-preenchimento do formulário "Nova distribuição" ao voltar da aba de
+    # Cardápios (data/refeição na querystring). Pré-seleciona o cardápio do dia,
+    # se houver, para o operador só confirmar.
+    pre_date = parse_date(request.GET.get("data", "") or "")
+    pre_meal = request.GET.get("refeicao", "").strip()
+    pre_menu = None
+    if campus and pre_date and pre_meal:
+        pre_menu = Menu.objects.filter(
+            campus=campus, service_date=pre_date, meal_type=pre_meal
+        ).first()
+    form = {
+        "service_date": request.GET.get("data", ""),
+        "meal_type": pre_meal or MealType.SNACK,
+        "inicio": "",
+        "fim": "",
+        "menu": pre_menu.pk if pre_menu else "",
+    }
+    # Admin global (sem campus) com mais de um campus ativo precisa escolher.
+    active_campuses = Campus.objects.filter(active=True).order_by("name")
+
     return render(
         request,
         "distributions/list.html",
@@ -113,6 +143,9 @@ def distribution_list(request):
             "page": page,
             "querystring": query.urlencode(),
             "campus": campus,
+            "form": form,
+            "active_campuses": active_campuses,
+            "show_campus_select": campus is None and active_campuses.exists(),
             "breadcrumbs": [
                 {"label": "Início", "url": "/"},
                 {"label": "Distribuições"},
@@ -137,8 +170,8 @@ def _handle_create(request, campus):
         messages.error(request, "Campus não definido.")
         return
     service_date = parse_date(request.POST.get("service_date", "") or "")
-    start = _aware(parse_datetime(request.POST.get("planned_start_at", "") or ""))
-    end = _aware(parse_datetime(request.POST.get("planned_end_at", "") or ""))
+    start = _combine(service_date, request.POST.get("inicio", ""))
+    end = _combine(service_date, request.POST.get("fim", ""))
     meal_type = request.POST.get("meal_type") or MealType.SNACK
     menu = None
     menu_id = request.POST.get("menu")
@@ -146,6 +179,9 @@ def _handle_create(request, campus):
         menu = Menu.objects.filter(pk=menu_id, campus=campus).first()
     if not (service_date and start and end and meal_type):
         messages.error(request, "Preencha data, refeição, início e fim.")
+        return
+    if end <= start:
+        messages.error(request, "O fim previsto deve ser depois do início previsto.")
         return
     services.create_distribution(
         campus=campus,
@@ -244,8 +280,8 @@ def distribution_edit(request, pk):
 
     if request.method == "POST":
         service_date = parse_date(request.POST.get("service_date", "") or "")
-        start = _aware(parse_datetime(request.POST.get("planned_start_at", "") or ""))
-        end = _aware(parse_datetime(request.POST.get("planned_end_at", "") or ""))
+        start = _combine(service_date, request.POST.get("inicio", ""))
+        end = _combine(service_date, request.POST.get("fim", ""))
         meal_type = request.POST.get("meal_type") or MealType.SNACK
         menu_id = request.POST.get("menu")
         menu = Menu.objects.filter(pk=menu_id, campus=distribution.campus).first() if menu_id else None
