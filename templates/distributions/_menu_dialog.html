@@ -1,10 +1,8 @@
 {% comment %}
 Pop-up para cadastrar um cardápio único sem sair da tela de distribuições.
 Abre pelo botão com id="menu-dialog-open"; cria via fetch em `menus_api:create`
-e injeta a opção nova no select (atributo data-target-select do botão).
-
-Contexto opcional: `campus_locked` + `campus_id` (tela de edição) OU
-`show_campus_select` + `active_campuses` (admin global).
+(campus vem do contexto do usuário) e injeta a opção nova no select indicado
+por `data-target-select` do botão.
 {% endcomment %}
 <dialog id="menu-dialog" class="w-full max-w-md rounded-2xl p-0 shadow-xl backdrop:bg-slate-900/40">
   <form id="menu-dialog-form" method="post" class="p-5">
@@ -13,16 +11,6 @@ Contexto opcional: `campus_locked` + `campus_id` (tela de edição) OU
     <p id="menu-dialog-error"
        class="mb-3 hidden rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"></p>
     <div class="grid gap-3">
-      {% if campus_locked %}
-        <input type="hidden" name="campus" value="{{ campus_id }}">
-      {% elif show_campus_select %}
-        <label class="text-sm">Campus
-          <select name="campus" required class="mt-1 w-full rounded border border-slate-300 p-2">
-            <option value="">Selecione…</option>
-            {% for c in active_campuses %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
-          </select>
-        </label>
-      {% endif %}
       <label class="text-sm">Data
         <input type="date" name="service_date" required
                class="mt-1 w-full rounded border border-slate-300 p-2">

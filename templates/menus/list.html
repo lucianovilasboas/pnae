@@ -13,14 +13,6 @@
   <form method="post" class="mb-6 rounded-lg bg-white p-4 shadow sm:p-5">
     {% csrf_token %}
     <input type="hidden" name="voltar" value="{{ prefill.voltar }}">
-    {% if show_campus_select %}
-      <label class="mb-3 block text-sm">Campus
-        <select name="campus" required class="mt-1 w-full rounded border border-slate-300 p-2 sm:max-w-xs">
-          <option value="">Selecione…</option>
-          {% for c in active_campuses %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
-        </select>
-      </label>
-    {% endif %}
     <h2 class="mb-3 font-semibold">
       Novo cardápio
       {% if prefill.voltar %}

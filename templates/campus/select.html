@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Campus — PNAE [CPN]{% endblock %}
+
+{% block content %}
+  <h1 class="mb-2 text-2xl font-bold">Campus ativo</h1>
+
+  {% if not can_switch %}
+    <p class="mb-4 text-sm text-slate-600">
+      Seu usuário está vinculado a um campus. Para operar em outro campus,
+      fale com um administrador.
+    </p>
+    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+      <div class="font-semibold">{{ current.name }}</div>
+      <div class="text-sm text-slate-500">{{ current.code }}</div>
+    </div>
+  {% else %}
+    <p class="mb-4 text-sm text-slate-600">
+      Escolha o campus em que você vai operar. Vale para o seu contexto da
+      aplicação até você trocar novamente.
+    </p>
+    <form method="post" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="grid gap-2 sm:grid-cols-2">
+        {% for c in campuses %}
+          <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 p-3 text-sm hover:bg-slate-50">
+            <input type="radio" name="campus" value="{{ c.pk }}" required
+                   {% if current and current.pk == c.pk %}checked{% endif %}>
+            <span>
+              <span class="font-semibold">{{ c.name }}</span>
+              <span class="block text-xs text-slate-500">{{ c.code }}</span>
+            </span>
+          </label>
+        {% empty %}
+          <p class="text-sm text-slate-500">Nenhum campus ativo.</p>
+        {% endfor %}
+      </div>
+      {% if campuses %}
+        <button type="submit"
+                class="mt-4 w-full rounded-full bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 sm:w-auto">
+          Usar este campus
+        </button>
+      {% endif %}
+    </form>
+  {% endif %}
+{% endblock %}

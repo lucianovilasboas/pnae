@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from apps.accounts.decorators import can_reverse, is_operator
-from apps.campus.models import Campus, ClassGroup
+from apps.campus.models import ClassGroup
 from apps.campus.selectors import resolve_campus
 from apps.dates import WEEKDAY_LABELS, parse_weekdays
 from apps.menus.models import MealType, Menu
@@ -132,9 +132,6 @@ def distribution_list(request):
         "fim": "",
         "menu": pre_menu.pk if pre_menu else "",
     }
-    # Admin global (sem campus) com mais de um campus ativo precisa escolher.
-    active_campuses = Campus.objects.filter(active=True).order_by("name")
-
     return render(
         request,
         "distributions/list.html",
@@ -144,8 +141,6 @@ def distribution_list(request):
             "querystring": query.urlencode(),
             "campus": campus,
             "form": form,
-            "active_campuses": active_campuses,
-            "show_campus_select": campus is None and active_campuses.exists(),
             "breadcrumbs": [
                 {"label": "Início", "url": "/"},
                 {"label": "Distribuições"},

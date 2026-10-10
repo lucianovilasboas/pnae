@@ -15,15 +15,6 @@
     <input type="hidden" name="action" value="create">
     <h2 class="mb-3 font-semibold">Nova distribuição</h2>
 
-    {% if show_campus_select %}
-      <label class="mb-3 block text-sm">Campus
-        <select name="campus" required class="mt-1 w-full rounded border border-slate-300 p-2 sm:max-w-xs">
-          <option value="">Selecione…</option>
-          {% for c in active_campuses %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
-        </select>
-      </label>
-    {% endif %}
-
     {# Linha 1: data + horários previstos (só a hora; a data vem do campo Data). #}
     <div class="grid gap-3 sm:grid-cols-3">
       <label class="text-sm">Data

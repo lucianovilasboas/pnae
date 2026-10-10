@@ -61,6 +61,12 @@
                     Sair ({{ user.get_short_name }})
                   </button>
                 </form>
+                {% if active_campus %}
+                  <p class="px-3 pt-1 text-xs text-emerald-100">
+                    Campus: {{ active_campus.code }}
+                    {% if can_switch_campus %}<a href="{% url 'campus:select' %}" class="underline">trocar</a>{% endif %}
+                  </p>
+                {% endif %}
                 <p class="px-3 pt-1 text-center text-[11px] text-emerald-200/80">
                   PNAE [CPN] · v{{ app_version }}
                 </p>
@@ -73,6 +79,15 @@
       {% if user.is_authenticated %}
         <nav class="mt-2 hidden flex-wrap items-center gap-x-4 gap-y-1 text-sm sm:flex">
           {% include "_nav_links.html" with link_class="hover:underline" active_class="font-semibold underline" %}
+          {% if active_campus %}
+            <span class="ms-auto rounded-full bg-emerald-800 px-3 py-0.5 text-xs text-emerald-50">
+              {% if can_switch_campus %}
+                <a href="{% url 'campus:select' %}" class="hover:underline">Campus: {{ active_campus.code }} · trocar</a>
+              {% else %}
+                Campus: {{ active_campus.code }}
+              {% endif %}
+            </span>
+          {% endif %}
         </nav>
       {% endif %}
     </div>

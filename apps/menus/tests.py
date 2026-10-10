@@ -308,15 +308,17 @@ class MenuApiTests(TestCase):
         response = self._post(service_date="2026-10-20", meal_type="SNACK", description="")
         self.assertEqual(response.status_code, 400)
 
-    def test_admin_global_informa_campus(self):
+    def test_admin_global_usa_campus_da_sessao(self):
         Campus.objects.create(name="Outro", code="OUT")  # 2º campus ativo → ambíguo
         admin = User.objects.create_superuser(
             email="root@example.org", password="x", name="Root"
         )
         self.client.force_login(admin)
+        session = self.client.session
+        session["campus_id"] = self.campus.pk
+        session.save()
         response = self._post(
-            service_date="2026-10-21", meal_type="SNACK",
-            description="Via campus explícito", campus=self.campus.pk,
+            service_date="2026-10-21", meal_type="SNACK", description="Via sessão"
         )
         self.assertEqual(response.status_code, 201)
 
