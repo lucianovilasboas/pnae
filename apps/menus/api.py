@@ -11,7 +11,6 @@ from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 
 from apps.accounts.decorators import api_operator_required
-from apps.campus.models import Campus
 from apps.campus.selectors import resolve_campus
 
 from .models import MealType
@@ -31,10 +30,8 @@ def _payload(request) -> dict:
 @api_operator_required
 def menu_create(request):
     data = _payload(request)
-    # Campus do usuário / único ativo; senão, o informado no corpo (admin global).
-    campus = resolve_campus(request.user, None)
-    if campus is None and data.get("campus"):
-        campus = Campus.objects.filter(pk=data["campus"], active=True).first()
+    # O campus vem do contexto do usuário (cadastro ou campus ativo da sessão).
+    campus = resolve_campus(request.user, request)
     if campus is None:
         return JsonResponse({"detail": "Selecione o campus.", "code": "no_campus"}, status=400)
 

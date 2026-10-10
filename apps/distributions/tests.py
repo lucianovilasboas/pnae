@@ -787,7 +787,7 @@ class DistributionFormLayoutTests(DistributionFixture):
         self.assertIn('id="menu-dialog-open"', body)
         self.assertIn(reverse("menus_api:create"), body)
 
-    def test_seletor_de_campus_quando_ambiguo(self):
+    def test_admin_global_redireciona_para_escolha_de_campus(self):
         from apps.accounts.models import User as _User
 
         Campus.objects.create(name="Outro Campus", code="OUT")  # 2º campus ativo
@@ -795,7 +795,8 @@ class DistributionFormLayoutTests(DistributionFixture):
             email="root@example.org", password="x", name="Root"
         )
         self.client.force_login(admin)
-        self.assertContains(self.client.get(reverse("distributions:list")), 'name="campus"')
+        response = self.client.get(reverse("distributions:list"))
+        self.assertRedirects(response, "/campus/?next=/distribuicoes/")
 
     def test_edicao_usa_hora(self):
         d = Distribution.objects.create(

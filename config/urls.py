@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/menus/", include("apps.menus.urls_api")),
     path("api/", include("apps.distributions.urls")),
     path("estudantes/", include("apps.students.urls_pages")),
+    path("campus/", include("apps.campus.urls")),
     path("cardapios/", include("apps.menus.urls")),
     path("aluno/", include("apps.portal.urls")),
     path("auditoria/", include("apps.audit.urls")),

@@ -6,6 +6,24 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e versionamento [SemVer](https://semver.org/lang/pt-BR/).
 A versão corrente é a constante `APP_VERSION` em `config/version.py`.
 
+## [1.1.0] - 2026-10-10
+
+### Added
+- Página **Campus ativo** (`/campus/`) e chip de campus no cabeçalho; só quem
+  não tem campus vinculado (administrador global) pode trocar.
+- `ActiveCampusMiddleware`: leva para a escolha de campus quando o contexto é
+  ambíguo (usuário sem campus e mais de um campus ativo).
+
+### Changed
+- O campus passa a ser **contexto do usuário** (`resolve_campus`): campus do
+  cadastro → campus da sessão (admin global) → informado → único ativo.
+  Os formulários deixam de pedir campus.
+- Navegação: "Importar" deixa de ser aba e vira ação dentro de **Estudantes**
+  ("Importar estudantes"). "QR Codes" permanece separado.
+
+### Removed
+- Seletor de campus nos formulários de distribuição e de cardápios.
+
 ## [1.0.0] - 2026-10-10
 
 ### Added

@@ -11,9 +11,7 @@
 {% endif %}
 {% if user.is_superuser or user.role == 'ADMIN' %}
   <a href="{% url 'students_pages:student-list' %}"
-     class="{{ link_class }}{% if '/estudantes/' in path and '/importar/' not in path and '/qr/' not in path %} {{ active_class }}{% endif %}">Estudantes</a>
-  <a href="{% url 'students_pages:import-page' %}"
-     class="{{ link_class }}{% if '/estudantes/importar/' in path %} {{ active_class }}{% endif %}">Importar</a>
+     class="{{ link_class }}{% if '/estudantes/' in path and '/qr/' not in path %} {{ active_class }}{% endif %}">Estudantes</a>
   <a href="{% url 'students_pages:qr-page' %}"
      class="{{ link_class }}{% if '/estudantes/qr/' in path %} {{ active_class }}{% endif %}">QR Codes</a>
   <a href="/admin/"

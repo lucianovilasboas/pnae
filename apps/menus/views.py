@@ -11,7 +11,6 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts.decorators import is_operator
 from apps.audit.services import record_event
-from apps.campus.models import Campus
 from apps.campus.selectors import resolve_campus
 
 from .models import MealType, Menu
@@ -137,8 +136,6 @@ def menu_list(request):
             "page": page,
             "querystring": query.urlencode(),
             "campus": campus,
-            "active_campuses": Campus.objects.filter(active=True).order_by("name"),
-            "show_campus_select": campus is None and Campus.objects.filter(active=True).exists(),
             "meal_types": MealType.choices,
             "filters": {"de": request.GET.get("de", ""), "ate": request.GET.get("ate", "")},
             # Pré-preenchimento ao chegar da tela de Distribuições ("+").

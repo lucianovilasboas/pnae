@@ -2,6 +2,8 @@
 {% block title %}Importar estudantes — PNAE [CPN]{% endblock %}
 
 {% block content %}
+  <a href="{% url 'students_pages:student-list' %}"
+     class="mb-2 inline-block text-sm text-emerald-700 hover:underline">← Voltar para Estudantes</a>
   <h1 class="mb-2 text-2xl font-bold">Importar estudantes</h1>
   <p class="mb-4 text-sm text-slate-600">
     Envie um arquivo CSV ou XLSX. Colunas aceitas (o cabeçalho é reconhecido
