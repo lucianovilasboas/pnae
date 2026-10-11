@@ -43,6 +43,7 @@
             <input type="hidden" name="action" value="reverse">
             <input type="hidden" name="delivery_id" value="{{ delivery.pk }}">
             <input type="text" name="reason" placeholder="Motivo do estorno" required
+                   list="reversal-reasons"
                    class="rounded-lg border border-slate-300 p-2 text-sm">
             <button class="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-700">Estornar</button>
           </form>
@@ -83,6 +84,7 @@
                   <input type="hidden" name="action" value="reverse">
                   <input type="hidden" name="delivery_id" value="{{ delivery.pk }}">
                   <input type="text" name="reason" placeholder="Motivo do estorno" required
+                         list="reversal-reasons"
                          class="w-40 rounded border border-slate-300 p-1 text-xs">
                   <button class="whitespace-nowrap rounded border border-red-300 px-2 py-1 text-xs text-red-700">
                     Estornar
@@ -99,4 +101,46 @@
       </tbody>
     </table>
   </div>
+
+  <datalist id="reversal-reasons">
+    {% for reason in reversal_reasons %}<option value="{{ reason }}" data-default></option>{% endfor %}
+  </datalist>
+  <script>
+    // Memoriza o motivo do estorno digitado (por aparelho), sem ir ao banco.
+    (function () {
+      const KEY = "pnae-reversal-reasons";
+      const datalist = document.getElementById("reversal-reasons");
+      if (!datalist) return;
+      function load() {
+        try {
+          const list = JSON.parse(localStorage.getItem(KEY) || "[]");
+          return Array.isArray(list) ? list : [];
+        } catch (e) { return []; }
+      }
+      function remember(value) {
+        const v = (value || "").trim();
+        if (!v) return;
+        const isDefault = Array.from(datalist.options).some(
+          (o) => o.hasAttribute("data-default") && o.value.toLowerCase() === v.toLowerCase()
+        );
+        if (isDefault) return;
+        const list = load().filter((r) => String(r).toLowerCase() !== v.toLowerCase());
+        list.unshift(v);
+        try { localStorage.setItem(KEY, JSON.stringify(list.slice(0, 10))); } catch (e) {}
+      }
+      const seen = new Set(Array.from(datalist.options).map((o) => o.value.toLowerCase()));
+      load().slice(0, 10).forEach((r) => {
+        const v = String(r || "").trim();
+        if (!v || seen.has(v.toLowerCase())) return;
+        seen.add(v.toLowerCase());
+        const option = document.createElement("option");
+        option.value = v;
+        datalist.appendChild(option);
+      });
+      document.querySelectorAll('form input[name="reason"]').forEach((input) => {
+        const form = input.closest("form");
+        if (form) form.addEventListener("submit", () => remember(input.value));
+      });
+    })();
+  </script>
 {% endblock %}

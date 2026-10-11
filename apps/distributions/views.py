@@ -21,6 +21,7 @@ from apps.menus.services import create_menus_bulk, plan_menus_bulk
 
 from . import services
 from .models import Delivery, Distribution, DistributionStatus
+from .reasons import EXTRA_REASONS, REVERSAL_REASONS
 from .services import DistributionStateError
 
 
@@ -325,6 +326,7 @@ def operation(request, pk):
         {
             "distribution": distribution,
             "summary": summary,
+            "extra_reasons": EXTRA_REASONS,
             "breadcrumbs": _distribution_crumbs(distribution),
         },
     )
@@ -394,6 +396,7 @@ def deliveries(request, pk):
             "distribution": distribution,
             "deliveries": items,
             "can_reverse": can_reverse(request.user),
+            "reversal_reasons": REVERSAL_REASONS,
             "breadcrumbs": _distribution_crumbs(distribution, "Entregas"),
         },
     )

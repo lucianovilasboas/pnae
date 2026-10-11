@@ -6,6 +6,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e versionamento [SemVer](https://semver.org/lang/pt-BR/).
 A versão corrente é a constante `APP_VERSION` em `config/version.py`.
 
+## [1.2.0] - 2026-10-10
+
+### Added
+- Sugestões de motivo no excedente e no estorno (`<datalist>`), mantendo o campo
+  livre; o que o usuário digita é memorizado no aparelho (`localStorage`, até 10
+  por campo) para reutilizar depois.
+
 ## [1.1.0] - 2026-10-10
 
 ### Added
