@@ -821,3 +821,29 @@ class VersionTests(DistributionFixture):
         self.client.force_login(self.operator)
         body = self.client.get(reverse("distributions:home")).content.decode()
         self.assertIn(f"v{APP_VERSION}", body)
+
+
+class ReasonSuggestionsTests(DistributionFixture):
+    """Sugestões de motivo (datalist) no excedente e no estorno."""
+
+    def test_operacao_sugere_motivos_de_excedente(self):
+        from .reasons import EXTRA_REASONS
+
+        self.client.force_login(self.operator)
+        body = self.client.get(
+            reverse("distributions:operation", args=[self.distribution.pk])
+        ).content.decode()
+        self.assertIn('id="extra-reasons"', body)
+        self.assertIn(EXTRA_REASONS[0], body)
+        self.assertIn("pnae-extra-reasons", body)
+
+    def test_entregas_sugere_motivos_de_estorno(self):
+        from .reasons import REVERSAL_REASONS
+
+        self.client.force_login(self.operator)
+        body = self.client.get(
+            reverse("distributions:deliveries", args=[self.distribution.pk])
+        ).content.decode()
+        self.assertIn('id="reversal-reasons"', body)
+        self.assertIn(REVERSAL_REASONS[0], body)
+        self.assertIn("pnae-reversal-reasons", body)

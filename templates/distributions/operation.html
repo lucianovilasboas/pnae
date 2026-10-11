@@ -128,13 +128,54 @@
         Entrega excedente exige autorização e motivo. O autorizador é o usuário atual.
       </p>
       <div class="flex flex-col gap-2 sm:flex-row">
-        <input id="extra-reason" type="text" placeholder="Motivo"
+        <input id="extra-reason" type="text" list="extra-reasons"
+               placeholder="Motivo (escolha ou digite)"
                class="flex-1 rounded-lg border border-slate-300 p-2">
         <button id="extra-confirm" type="button"
                 class="rounded-lg bg-amber-700 px-4 py-2 text-white">Registrar excedente</button>
       </div>
+      <datalist id="extra-reasons">
+        {% for reason in extra_reasons %}<option value="{{ reason }}" data-default></option>{% endfor %}
+      </datalist>
     </div>
   </section>
+
+  {# Memória de motivos (por aparelho), sem ir ao banco. #}
+  <script>
+    window.pnaeLoadReasons = function (key, datalistId) {
+      try {
+        const datalist = document.getElementById(datalistId);
+        if (!datalist) return;
+        const list = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!Array.isArray(list)) return;
+        const seen = new Set(Array.from(datalist.options).map((o) => o.value.toLowerCase()));
+        list.slice(0, 10).forEach((r) => {
+          const v = String(r || "").trim();
+          if (!v || seen.has(v.toLowerCase())) return;
+          seen.add(v.toLowerCase());
+          const option = document.createElement("option");
+          option.value = v;
+          datalist.appendChild(option);
+        });
+      } catch (e) { /* localStorage indisponível */ }
+    };
+    window.pnaeRememberReason = function (key, datalistId, value) {
+      try {
+        const datalist = document.getElementById(datalistId);
+        const v = (value || "").trim();
+        if (!datalist || !v) return;
+        const isDefault = Array.from(datalist.options).some(
+          (o) => o.hasAttribute("data-default") && o.value.toLowerCase() === v.toLowerCase()
+        );
+        let list = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!Array.isArray(list)) list = [];
+        list = list.filter((r) => String(r).toLowerCase() !== v.toLowerCase());
+        if (!isDefault) list.unshift(v);
+        localStorage.setItem(key, JSON.stringify(list.slice(0, 10)));
+      } catch (e) { /* silencioso */ }
+    };
+    window.pnaeLoadReasons("pnae-extra-reasons", "extra-reasons");
+  </script>
 
   <script src="{% static 'vendor/zxing/zxing-browser.min.js' %}"></script>
   <script>
@@ -327,6 +368,7 @@
       }
       const { data } = await post(EXTRAS_URL, { token: lastToken, reason });
       paint(data.result || 'ALREADY_DELIVERED', data);
+      window.pnaeRememberReason("pnae-extra-reasons", "extra-reasons", reason);
       document.getElementById('extra-reason').value = '';
       refreshTotals();
     });
